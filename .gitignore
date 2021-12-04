@@ -20,3 +20,4 @@ Thumbs.db
 **/.ipynb_checkpoints
 **/dask-worker-space
 *.pkl
+**/AutoML_*
