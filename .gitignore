@@ -21,3 +21,4 @@ Thumbs.db
 **/dask-worker-space
 *.pkl
 **/AutoML_*
+*.db
