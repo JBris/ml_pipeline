@@ -18,3 +18,5 @@ Thumbs.db
 **/*.log
 **/mlruns
 **/.ipynb_checkpoints
+**/dask-worker-space
+*.pkl
