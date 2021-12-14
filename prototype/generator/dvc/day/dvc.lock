@@ -1,0 +1,21 @@
+schema: '2.0'
+stages:
+  generate:
+    cmd: python day_generator.py
+    deps:
+    - path: ../../../data/day.csv
+      md5: 15c0da6f6da37eeaf5e70bbec14d1120
+      size: 57569
+    - path: day_generator.py
+      md5: 2674cecb532a499071e8e283d1bb048d
+      size: 3169
+    params:
+      params.yaml:
+        day.mean: 1
+        day.seed: 100
+        day.split: 0.2
+        day.std: 1
+    outs:
+    - path: out/days.csv
+      md5: bab4f6e5116b0f4178f96016abf013bd
+      size: 220

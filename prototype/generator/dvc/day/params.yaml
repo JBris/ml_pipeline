@@ -1,0 +1,6 @@
+day:
+  split: 0.20
+  seed: 100
+  mean: 1
+  std: 1
+  out_dir: "out"
