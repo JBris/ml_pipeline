@@ -6,3 +6,9 @@ dvc run --force -n generate \
           -o out/forestfires.csv \
           python forest_fire_generator.py
 
+### For ../../../data/forestfires.csv, we can do: 
+# dvc add 
+# dvc checkout
+
+### To reproduce the pipeline
+# dvc repro 

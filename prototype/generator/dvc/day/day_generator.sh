@@ -6,3 +6,9 @@ dvc run --force -n generate \
           -o out/days.csv \
           python day_generator.py
 
+### For ../../../data/day.csv, we can do: 
+# dvc add 
+# dvc checkout
+
+### To reproduce the pipeline
+# dvc repro 

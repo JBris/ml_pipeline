@@ -1,9 +1,9 @@
 schema: '2.0'
 stages:
   prepare:
-    cmd: python src/prepare.py ../../data/forestfires.csv data/prepared
+    cmd: python src/prepare.py ../../../data/forestfires.csv data/prepared
     deps:
-    - path: ../../data/forestfires.csv
+    - path: ../../../data/forestfires.csv
       md5: 6a3e45dc816f3123f544fbec94a01559
       size: 25478
     - path: src/prepare.py

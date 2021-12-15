@@ -1,8 +1,8 @@
 stages:
   prepare:
-    cmd: python src/prepare.py ../../data/forestfires.csv data/prepared
+    cmd: python src/prepare.py ../../../data/forestfires.csv data/prepared
     deps:
-    - ../../data/forestfires.csv
+    - ../../../data/forestfires.csv
     - src/prepare.py
     params:
     - prepare.seed

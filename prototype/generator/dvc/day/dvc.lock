@@ -7,8 +7,8 @@ stages:
       md5: 15c0da6f6da37eeaf5e70bbec14d1120
       size: 57569
     - path: day_generator.py
-      md5: 2674cecb532a499071e8e283d1bb048d
-      size: 3169
+      md5: 89e2df19aa64e9eafe9f4e04549c89fc
+      size: 3167
     params:
       params.yaml:
         day.mean: 1
@@ -17,5 +17,5 @@ stages:
         day.std: 1
     outs:
     - path: out/days.csv
-      md5: bab4f6e5116b0f4178f96016abf013bd
-      size: 220
+      md5: 92dadd757598e1b09633e47120c3532f
+      size: 222

@@ -17,6 +17,7 @@ Thumbs.db
 **/node_modules
 **/*.log
 **/mlruns
+**/artifacts
 **/.ipynb_checkpoints
 **/dask-worker-space
 *.pkl

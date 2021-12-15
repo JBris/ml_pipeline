@@ -1,0 +1,51 @@
+name: multistep_example
+
+### Defaul behaviour
+### Creates a new conda environment for the experiment run
+### Environment is named mlflow-{hash}
+### This environment is not deleted, but is reused
+# conda_env: conda.yaml
+
+### Launches a Docker container
+### Checks for local Docker images
+### If image not found, checks Dockerhub
+#docker_env:
+#  image: mlflow-docker-example-environment
+#  volumes: ["./src:/app/src"]
+#  environment: [["USERNAME", "user"], ["password", "pass"]]
+
+entry_points:
+  prepare:
+    parameters:
+      prepare_file: { type: string, default: "../../../data/forestfires.csv" } 
+      prepare_output: { type: string, default: "prepared" }  
+    command: "python src/prepare.py --prepare_file {prepare_file} --prepare_output {prepare_output}"
+  featurization:
+    parameters:
+      featurize_input: { type: string, default: "prepared" }  
+      featurize_output: { type: string, default: "features" }  
+    command: python src/featurization.py --featurize_input {featurize_input} --featurize_output {featurize_output}
+  train:
+    parameters:
+      train_input: { type: string, default: "features" } 
+      train_output: { type: string, default: "model.pkl" }  
+    command: python src/train.py {train_input} {train_output}
+  evaluate:
+    parameters:
+      evaluate_model: model.pkl
+      evaluate_input: features
+      evaluate_scores: scores.json
+      evaluate_plot_data: pred_actual.json
+    command: python src/evaluate.py {evaluate_model} {evaluate_input} {evaluate_scores} {evaluate_plot_data}
+  main:
+    parameters:
+      input: { type: string, default: "../../../data/forestfires.csv" } 
+      prepared: { type: string, default: "prepared" }  
+      model: { type: string, default: "forest_fires_rf" }  
+      features: { type: string, default: "features" }  
+      scores: { type: string, default: "scores.json" }  
+      plot_data: { type: string, default: "pred_actual.json" }  
+      use_conda : { type: int, default: 0 }
+    command: "python src/main.py  --input {input} --prepared {prepared} --model {model}
+                                  --features {features} --scores {scores} --plot_data {plot_data}
+                                  --use_conda {use_conda}"

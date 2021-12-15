@@ -2,9 +2,9 @@
 
 dvc run --force -n prepare \
           -p prepare.seed,prepare.split \
-          -d src/prepare.py -d ../../data/forestfires.csv \
+          -d src/prepare.py -d ../../../data/forestfires.csv \
           -o data/prepared \
-          python src/prepare.py ../../data/forestfires.csv data/prepared
+          python src/prepare.py ../../../data/forestfires.csv data/prepared
 
 dvc run --force -n featurize \
           -p featurize.mean,featurize.std \
@@ -18,7 +18,7 @@ dvc run --force -n train \
           -o model.pkl \
           python src/train.py data/features model.pkl
 
-dvc run -n evaluate \
+dvc run --force -n evaluate \
           -d src/evaluate.py -d model.pkl -d data/features \
           -M scores.json \
           --plots-no-cache pred_actual.json \
