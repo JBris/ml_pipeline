@@ -309,6 +309,63 @@ services:
       - redis
       - postgres   
 
+  jenkins:
+      image: jenkins/jenkins:$JENKINS_TAG
+      container_name: "${PROJECT_NAME}_jenkins"
+      build: 
+        dockerfile: Dockerfile
+        context: ./build/jenkins
+        args:
+          JENKINS_TAG: $JENKINS_TAG
+          JENKINS_NUM_OF_EXECUTORS: $JENKINS_NUM_OF_EXECUTORS
+          BATS_TAG: $BATS_TAG
+          DOCKER_COMPOSE_TAG: $DOCKER_COMPOSE_TAG
+      stop_grace_period: 60s
+      privileged: true
+      restart: always
+      ports:
+        - ${JENKINS_PORT}:8080
+        - ${JENKINS_SLAVE_AGENT_PORT}:50000
+      environment:
+        PROJECT_NAME: $PROJECT_NAME
+        PROJECT_BASE_URL: $PROJECT_BASE_URL
+        JENKINS_TAG: $JENKINS_TAG
+        JENKINS_HOME: $JENKINS_HOME
+        JENKINS_NUM_OF_EXECUTORS: $JENKINS_NUM_OF_EXECUTORS
+        JENKINS_PORT: $JENKINS_PORT
+        JENKINS_SLAVE_AGENT_PORT: $JENKINS_SLAVE_AGENT_PORT
+        JAVA_OPTS: $JAVA_OPTS
+        JENKINS_OPTS: $JENKINS_OPTS
+        GITHUB_USERNAME: $GITHUB_USERNAME
+        GITHUB_API_TOKEN: $GITHUB_API_TOKEN
+        BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+        BITBUCKET_API_TOKEN: $BITBUCKET_API_TOKEN
+        GITLAB_USERNAME: $GITLAB_USERNAME
+        GITLAB_API_TOKEN: $GITLAB_API_TOKEN
+        DOCKER_COMPOSE_TAG: $DOCKER_COMPOSE_TAG
+        BATS_TAG: $BATS_TAG
+        TRAEFIK_TAG: $TRAEFIK_TAG
+        TRAEFIK_PORT: $TRAEFIK_PORT
+        TRAEFIK_DASHBOARD_PORT: $TRAEFIK_DASHBOARD_PORT
+        PORTAINER_TAG: $PORTAINER_TAG
+        PORTAINER_PORT: $PORTAINER_PORT
+      volumes:
+        - ./config/jenkins_home:${JENKINS_HOME}
+        - ./services/jenkins:/var/jenkins
+        - /var/run/docker.sock:/var/run/docker.sock
+      labels:
+        - "traefik.http.routers.${PROJECT_NAME}_jenkins.rule=Host(`jenkins.${PROJECT_BASE_URL}`)"
+        - "traefik.http.services.${PROJECT_NAME}_jenkins.loadbalancer.server.port=${JENKINS_PORT}"
+  
+    docker_compose:
+      image: docker/compose:$DOCKER_COMPOSE_TAG
+      container_name: "${PROJECT_NAME}_docker_compose"
+      environment:
+        JENKINS_HOME: $JENKINS_HOME
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - ./config/jenkins_home:${JENKINS_HOME}
+      
 networks:
   default:
       name: ml_pipeline_testing 
