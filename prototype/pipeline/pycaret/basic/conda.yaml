@@ -1,4 +1,4 @@
-name: tpot-example
+name: pycaret-basic
 channels:
   - conda-forge
 dependencies:
@@ -6,4 +6,4 @@ dependencies:
   - pip
   - pip:
       - mlflow>=1.6.0
-      - tpot
+      - pycaret
