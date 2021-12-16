@@ -22,4 +22,5 @@ Thumbs.db
 **/dask-worker-space
 *.pkl
 **/AutoML_*
-*.db
+**/*.db
+**/catboost_info
