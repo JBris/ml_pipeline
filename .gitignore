@@ -4,6 +4,8 @@
 **/saved
 
 **/*.env
+**/*config.local.ini
+
 .Rproj.user
 .Rhistory
 .RData
