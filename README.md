@@ -15,7 +15,7 @@
 
 This repository contains a machine learning pipeline framework for running fruit size prediction experiments.
 
-Execute `init.sh` to initialise the pipeline tool. Several options are supported. Run `init.sh -h` for help.
+Execute `init.sh` to initialise the pipeline tool. Several additional options are supported. Run `init.sh -h` for help.
 
 Edit `.env` and `config.local.ini` to specify your local environment configuration as required.
 
@@ -33,7 +33,7 @@ The following core Python packages are required:
 * PyCaret
 * Optuna
 
-[See the environments directory for the associated Conda and Pip environments.](environments)
+[See requirements.txt for the associated packages and versions.](requirements.txt)
 
 ### DVC
 

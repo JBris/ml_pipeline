@@ -11,7 +11,7 @@ usage() {
     Options:
         d   Deploy the Docker stack.
         e   Recreate the .env file from .env.example.
-        p   Create a new Python environment using the supplied environment name.
+        p   Create a new virtual environment with dependencies using Conda.
     """
 }
 
@@ -38,7 +38,7 @@ help "${1}"
 create_file config.local.ini config.local.ini.example
 create_file .env  .env.example
 
-while getopts ":dep:" opt; do
+while getopts "dep" opt; do
     case $opt in
         e) 
             cp .env.example .env  
@@ -49,14 +49,13 @@ while getopts ":dep:" opt; do
             ./init_docker.sh
             ;;
         p)
-            environment=${OPTARG}
-            echo $environment
+            conda env create -f environment.yml python=3.8 || conda env update -f environment.yml python=3.8
             ;;
         *) 
-            exit 1
+            echo 
             ;;
   esac
 done
-shift $(($OPTIND - 1))
 
+shift $(($OPTIND - 1))
 echo "Done"

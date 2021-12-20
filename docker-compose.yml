@@ -1,0 +1,106 @@
+version: "3.5"
+
+services:
+  python:
+    image: "python:${PYTHON_TAG}"
+    container_name: "${PROJECT_NAME}_python"
+    hostname: python
+    stop_grace_period: 60s
+    build: 
+      dockerfile: Dockerfile
+      context: ./python
+      args:
+        BASE_IMAGE: python:${PYTHON_TAG}
+    environment:
+      PYTHON_REDIS_HOST: $PYTHON_REDIS_HOST
+      PYTHON_REDIS_PORT: $PYTHON_REDIS_PORT
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./python:/scripts
+      
+  tidyverse:
+    image: "rocker/tidyverse:${TIDYVERSE_TAG}"
+    container_name: "${PROJECT_NAME}_tidyverse"
+    hostname: tidyverse
+    stop_grace_period: 60s
+    restart: always
+    build: 
+      dockerfile: Dockerfile
+      context: ./r
+      args:
+        TIDYVERSE_TAG: $TIDYVERSE_TAG
+    environment:
+      USER: $R_STUDIO_USER
+      PASSWORD: $R_STUDIO_PASSWORD
+      ROOT: "TRUE"
+      #DISABLE_AUTH: true
+    ports:
+      - ${R_STUDIO_PORT}:8787 
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./r:/home
+      
+  influxdb:
+    image: "influxdb:${INFLUXDB_TAG}"
+    container_name: "${PROJECT_NAME}_influxdb"
+    hostname: influxdb
+    restart: always
+    stop_grace_period: 60s
+    ports:
+      - "${INFLUXDB_API_PORT}:8086"
+    environment:
+      INFLUXDB_DATA_ENGINE: $INFLUXDB_DATA_ENGINE
+      INFLUXDB_REPORTING_DISABLED: $INFLUXDB_REPORTING_DISABLED
+      INFLUXDB_DATA_QUERY_LOG_ENABLED: $INFLUXDB_DATA_QUERY_LOG_ENABLED
+    volumes:
+      - ./data/influxdb:/var/lib/influxdb
+
+  telegraf:
+    image: "telegraf:${TELEGRAF_TAG}"
+    container_name: "${PROJECT_NAME}_telegraf"
+    hostname: telegraf
+    restart: always
+    stop_grace_period: 60s
+    depends_on:
+      - influxdb
+    environment:
+      - HOST_PROC=/host/proc
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc:/host/proc:ro 
+      - ./config/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+
+  grafana:
+    image: "grafana/grafana:${GRAFANA_TAG}"
+    container_name: "${PROJECT_NAME}_grafana"
+    hostname: grafana
+    restart: always
+    stop_grace_period: 60s
+    user: "0"
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    environment:
+      GF_INSTALL_PLUGINS: $GF_INSTALL_PLUGINS
+    depends_on:
+      - influxdb
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+     
+  redis:
+    image: "redis:${REDIS_TAG}"
+    container_name: "${PROJECT_NAME}_redis"
+    hostname: redis
+    stop_grace_period: 60s
+    restart: always
+    ports:
+      - ${REDIS_PORT}:6379
+
+networks:
+  default:
+      name: ts_anomaly_detection

@@ -1,0 +1,5 @@
+dvc==2.9.3
+mlflow==1.23.0
+optuna==2.10.0
+pycaret==2.3.5
+ray==1.9.2
