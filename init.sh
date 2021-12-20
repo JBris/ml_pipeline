@@ -8,10 +8,6 @@ usage() {
     echo """
     Usage: ${0} -d -e [-p <string>]
 
-    Initiates the project:
-        * Creates scaffolding files. 
-        * Optionally deploys the Docker stack.
-
     Options:
         d   Deploy the Docker stack.
         e   Recreate the .env file from .env.example.
@@ -20,7 +16,7 @@ usage() {
 }
 
 help() {
-    if [ "${1}" = "-h" ] || [ "${1}" = "--h" ]; then
+    if [ "${1}" = "-h" ] || [ "${1}" = "-help" ]; then
         usage
         exit 1
     fi
@@ -50,7 +46,7 @@ while getopts ":dep:" opt; do
             ;;
         d)
             . .env
-            ./build_docker.sh
+            ./init_docker.sh
             ;;
         p)
             environment=${OPTARG}
