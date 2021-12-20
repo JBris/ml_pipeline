@@ -6,12 +6,13 @@
 
 usage() {
     echo """
-    Usage: ${0} -d -e [-p <string>]
+    Usage: ${0} [-c <string>] -d -e -p
 
     Options:
+        c   Create a new virtual environment (with the specified name) including dependencies using Conda.
         d   Deploy the Docker stack.
         e   Recreate the .env file from .env.example.
-        p   Create a new virtual environment with dependencies using Conda.
+        p   install Python requirements using pip
     """
 }
 
@@ -38,18 +39,22 @@ help "${1}"
 create_file config.local.ini config.local.ini.example
 create_file .env  .env.example
 
-while getopts "dep" opt; do
+while getopts "c:dep" opt; do
     case $opt in
-        e) 
-            cp .env.example .env  
-            echo "Created .env" 
+        c)
+            name=${OPTARG}
+            conda env create -n "${name}" -f environment.yml python=3.8 || conda env update -n "${name}" -f environment.yml  
             ;;
         d)
             . .env
             ./init_docker.sh
             ;;
+        e) 
+            cp .env.example .env  
+            echo "Created .env" 
+            ;;
         p)
-            conda env create -f environment.yml python=3.8 || conda env update -f environment.yml python=3.8
+            python -m pip install -r requirements.txt
             ;;
         *) 
             echo 
