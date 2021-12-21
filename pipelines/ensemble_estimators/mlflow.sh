@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+. ../../.env
+
 ###################################################################
 # Functions
 ###################################################################
@@ -25,15 +27,13 @@ help() {
 ###################################################################
 
 # Exports
-export MLFLOW_TRACKING_URI="${1:-http://127.0.0.1:5000}"
+export MLFLOW_TRACKING_URI="${1:-${MLFLOW_TRACKING_URI}}"
 
 #export RAY_ADDRESS=auto # Uncomment if using Ray
 
 # Parameter overrides
 example=-1
 
-# Flag to use system environment instead of Conda or Docker: --no-conda 
-
-mlflow run --no-conda . -P example=${example}  
+mlflow run ${MLFLOW_CONDA} . -P example=${example}  
 
 

@@ -35,10 +35,15 @@ create_project() {
     if [ "${2}" = "dvc" ]; then
         cp ../templates/dvc.sh "${1}/dvc.sh"
         cp ../templates/dvc.yaml "${1}/dvc.yaml"
-        current_dir=$(pwd)
-        cd "${1}"
-        dvc init --subdir
-        cd "${current_dir}"
+        read -p "Please enter the root directory for the DVC project [optional]: " dvc_dir
+        if [ ! -z "${dvc_dir}" ]; then
+            current_dir=$(pwd)
+            mv "${1}" "${dvc_dir}"
+            cd "${dvc_dir}"
+            git init
+            dvc init
+            cd "${current_dir}"
+        fi
     elif [ "${2}" = "mlflow" ]; then
         cp ../templates/mlflow.sh "${1}/mlflow.sh"
         envsubst '${name} ${description}' < ../templates/MLproject > "${1}/MLproject"

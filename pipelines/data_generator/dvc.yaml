@@ -1,9 +1,0 @@
-stages:
-  run:
-    cmd: python src/run.py --example ${example}
-    deps:
-    - src/run.py
-    params: 
-    - example
-    outs: 
-    - data/example.txt

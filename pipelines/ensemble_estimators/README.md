@@ -6,4 +6,4 @@
 
 ### Introduction
 
-Fit an ensemble estimator using PyCaret
+Create an ensemble estimator for fruit sizing using PyCaret.

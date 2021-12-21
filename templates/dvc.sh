@@ -1,1 +1,3 @@
-dvc repro 
+#!/usr/bin/env bash
+
+dvc repro "${@}"

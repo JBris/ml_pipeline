@@ -17,7 +17,7 @@ from pipeline_lib.config import add_argument, get_config
 ##########################################################################################################
 
 parser = argparse.ArgumentParser(
-    description = 'Fit an ensemble estimator using PyCaret'
+    description = 'Create an ensemble estimator for fruit sizing.'
 )
     
 add_argument(parser, "--example", 0, "An example argument")

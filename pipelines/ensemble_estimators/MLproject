@@ -1,8 +1,5 @@
-name: foo
+name: ensemble_estimators
 
-### Default behaviour:
-### Creates a new conda environment for the experiment run using conda.yaml
-### Environment is named mlflow-{hash}
 # conda_env: conda.yaml
 
 entry_points:

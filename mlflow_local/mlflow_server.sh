@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+. ../.env
+
 # Launch a local MLFlow server instance
 
-mlflow server --host 127.0.0.1 --port 5000 \
+mlflow server --host "${MLFLOW_LOCAL_HOST}" --port "${MLFLOW_LOCAL_PORT}" \
 --default-artifact-root ./artifacts  \
 --backend-store-uri sqlite:///mlflow.db # Uses an SQLite database 
