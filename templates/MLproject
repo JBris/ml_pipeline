@@ -1,0 +1,13 @@
+name: foo
+
+### Default behaviour:
+### Creates a new conda environment for the experiment run using conda.yaml
+### Environment is named mlflow-{hash}
+# conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      example: { type: int, default: 0 }
+    command: python src/run.py  --example {example}  
+  
