@@ -1,0 +1,16 @@
+# Random
+random_seed: 100
+
+# Training
+training_frac: 0.9
+search_algorithm: random
+distributed_search_algorithm: optuna
+search_library: scikit-learn 
+distributed_search_library: tune-sklearn
+fold_strategy: kfold
+k_fold: 5
+imputation_type: iterative
+
+# Evaluation
+evaluation_metric: MSE
+  

@@ -21,6 +21,7 @@ class Config:
 
     def __init__(self):
         self.config = {}
+        self.env_var_prefixes = ["MLFLOW_", "RAY_"]
 
     def get(self, key: str):
         return self.config.get(key)
@@ -29,6 +30,13 @@ class Config:
         self.config[key] = value
         return self
 
+    def from_env(self):
+        environment_vars = dict(os.environ)
+        for k, v in environment_vars.items():
+            for prefix in self.env_var_prefixes:
+                if k.startswith(prefix): 
+                    self.config[k] = v
+            
     def from_yaml(self, path: str):
         with open(path) as f:
             options: dict = yaml.safe_load(f)
@@ -36,6 +44,10 @@ class Config:
                 options = {}
             self.extract_key_values(options)
     
+    def to_yaml(self, outfile: str, default_flow_style: bool = False):
+        with open(outfile, 'w') as f:
+            yaml.dump(self.config, f, default_flow_style = default_flow_style)
+
     def from_parser(self, parser: argparse.ArgumentParser):
         args = parser.parse_args()
         arg_dict = vars(args)
@@ -49,6 +61,14 @@ def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
     """
     Get a new configuration object.
 
+    Configuration Hierarchy:
+        1. Environment variables
+        2. config.global.yaml
+        3. The project's params.yaml
+        4. Arguments from parser 
+        5. The scenario file.
+        6. config.local.yaml
+
     Parameters
     --------------
     base_dir: str
@@ -60,11 +80,8 @@ def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
         The configuration object.
     """
     config = Config()
-    config.from_yaml(f"{base_dir}/config.yaml")
-
-    local_config = f"{base_dir}/config.local.yaml"
-    if os.path.isfile(local_config):
-        config.from_yaml(local_config)
+    config.from_env()
+    config.from_yaml(f"{base_dir}/config.global.yaml")
     
     params = "params.yaml"
     if os.path.isfile(params):
@@ -73,6 +90,14 @@ def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
     if parser is not None:
         config.from_parser(parser)
 
+    scenario = config.get("scenario")
+    if scenario is not None:
+        config.from_yaml(f"{base_dir}/scenarios/{scenario}.yaml")
+
+    local_config = f"{base_dir}/config.local.yaml"
+    if os.path.isfile(local_config):
+        config.from_yaml(local_config)
+        
     return config
 
 def add_argument(parser: argparse.ArgumentParser, name: str, default, arg_help: str, 

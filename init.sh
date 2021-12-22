@@ -36,7 +36,7 @@ create_file () {
 
 help "${1}"
 
-create_file config.local.yaml config.yaml
+touch config.local.yaml
 create_file .env  .env.example
 
 while getopts "c:dep" opt; do

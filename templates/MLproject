@@ -5,6 +5,7 @@ name: $name
 entry_points:
   main:
     parameters:
-      example: { type: int, default: 0 }
-    command: python src/run.py  --example {example}  
+      base_dir: { type: string, default: "" } 
+      scenario: { type: string, default: "" } 
+    command: python src/run.py  --base_dir {base_dir} --scenario {scenario} 
   

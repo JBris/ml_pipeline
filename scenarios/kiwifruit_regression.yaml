@@ -1,0 +1,7 @@
+filename: data_gen/data/fresh_weight_g_synth.csv
+target: Fresh Weight (FW) (g)
+est_task: regression
+evaluation_metric: MSE
+fold_groups: null
+n_estimators: 100
+n_select: 5

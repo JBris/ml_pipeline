@@ -1,1 +1,5 @@
-example: 1
+evaluation_metric: MSE
+fold_groups: null
+meta_model: dt
+n_select: 1
+n_estimators: 500

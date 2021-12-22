@@ -3,15 +3,24 @@
 . ../../.env
 
 ###################################################################
+# Variables
+###################################################################
+
+params=
+
+###################################################################
 # Functions
 ###################################################################
 
 usage() {
     echo """
-    Usage: ${0} [MLFLOW_TRACKING_URI] 
+    Usage: ${0} [-d SIZING_DIR] [-r RAY_ADDRESS] [-r SCENARIO] [-u MLFLOW_TRACKING_URI] 
 
     Parameters:
-        MLFLOW_TRACKING_URI The URI for the MLFlow instance.
+        d   The root directory for the project.
+        r   The Ray address.
+        s   The pipeline scenario file.
+        u   The URI for the MLFlow instance.
     """
 }
 
@@ -22,18 +31,43 @@ help() {
     fi
 }
 
+add_param() {
+    params="${params} -P ${1}=${2}"
+}
+
 ###################################################################
 # Main
 ###################################################################
 
+while getopts ":d:r:s:u:" opt; do
+    case $opt in
+        d)
+            SIZING_DIR=${OPTARG}
+            ;;
+        r)
+            RAY_ADDRESS=${OPTARG}
+            ;;
+        s)
+            PIPELINE_SCENARIO="${OPTARG}"
+            ;;
+        u)
+            MLFLOW_TRACKING_URI=${OPTARG}
+            ;;
+        *) 
+            echo 
+            ;;
+  esac
+done
+
 # Exports
-export MLFLOW_TRACKING_URI="${1:-${MLFLOW_TRACKING_URI}}"
+export MLFLOW_TRACKING_URI
+export RAY_ADDRESS
+echo "MLFlow address: ${MLFLOW_TRACKING_URI}"
+echo "Ray address: ${RAY_ADDRESS}"
 
-#export RAY_ADDRESS=auto # Uncomment if using Ray
-
+# Target directory 
 # Parameter overrides
-example=-1
+[[ ! -z "${SIZING_DIR}" ]] && add_param base_dir "${SIZING_DIR}"
+[[ ! -z "${PIPELINE_SCENARIO}" ]] && add_param scenario "${PIPELINE_SCENARIO}"
 
-mlflow run ${MLFLOW_CONDA} . -P example=${example}  
-
-
+mlflow run ${MLFLOW_CONDA} . ${params}
