@@ -4,8 +4,8 @@
 
 # External
 import argparse
-import os, sys
 import mlflow
+import os, sys
 import tempfile
 
 from pycaret.utils import check_metric
@@ -109,7 +109,10 @@ def main() -> None:
             mlflow.log_metric(key = "testing_actual", value = y, step = i)
             mlflow.log_metric(key = "testing_prediction", value = predictions, step = i)
                 
-        CONFIG.to_yaml(join_path(tmp_dir, "config.yaml"))
+        config_yaml = join_path(tmp_dir, "config.yaml")
+        CONFIG.to_yaml(config_yaml)
+        mlflow.log_artifact(config_yaml)
+        
         final_ensemble = ESTIMATOR.finalize_model(best_model)
         ensemble_model_residuals = ESTIMATOR.plot_model(final_ensemble, plot = 'residuals', save = tmp_dir)
         mlflow.log_artifact(join_path(tmp_dir, ensemble_model_residuals))

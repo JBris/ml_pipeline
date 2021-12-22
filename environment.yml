@@ -171,6 +171,7 @@ dependencies:
     - threadpoolctl==3.0.0
     - toml==0.10.2
     - tomli==1.2.3
+    - tpot==0.11.7
     - traitlets==5.1.1
     - tune-sklearn==0.4.1
     - typing-extensions==4.0.1

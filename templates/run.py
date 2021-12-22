@@ -5,7 +5,6 @@
 # External
 import argparse
 import os, sys
-from unicodedata import name
 
 base_dir = "../.."
 sys.path.insert(0, os.path.abspath(base_dir))
@@ -43,6 +42,7 @@ if BASE_DIR is None:
 
 def main() -> None:
     # mlflow.set_tracking_uri(CONFIG.get("MLFLOW_TRACKING_URI")) # Enable tracking using MLFlow
+    # with mlflow.start_run() as run, tempfile.TemporaryDirectory() as tmp_dir:
     example = CONFIG.get('example')
     with open("data/example.txt", "w") as f: 
         f.write(f"Example: {example}")
