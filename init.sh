@@ -36,7 +36,11 @@ create_file () {
 
 help "${1}"
 
-touch config.local.yaml
+if [ ! -f config.local.yaml ]; then 
+    touch config.local.yaml
+    echo "Created config.local.yaml"
+fi
+
 create_file .env  .env.example
 
 while getopts "c:dep" opt; do
