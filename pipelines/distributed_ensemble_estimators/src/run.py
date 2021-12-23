@@ -24,7 +24,7 @@ from pipeline_lib.estimator import PyCaretClassifier, PyCaretRegressor
 ##########################################################################################################
 
 parser = argparse.ArgumentParser(
-    description = 'Perform sizing estimation using ensemble models.'
+    description = 'Perform distributed sizing estimation using ensemble models.'
 )
     
 add_argument(parser, "--base_dir", "", "The base project directory", str)

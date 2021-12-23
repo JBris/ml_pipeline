@@ -49,6 +49,19 @@ create_project() {
         envsubst '${name} ${description}' < ../templates/MLproject > "${1}/MLproject"
         touch "${1}/conda.yaml"
     fi
+
+    while true; do
+        read -p "Do you wish to include Slurm job files (y/n)?" yn
+        case $yn in
+            [Yy]* ) 
+                envsubst '${name} ${description}' < ../templates/slurm_job.sh > "${1}/${1}_slurm.sh"
+                envsubst '${name} ${description}' < ../templates/slurm_job.sl > "${1}/${1}.sl"
+                break
+                ;;
+            [Nn]* ) exit;;
+            * ) echo "Please answer yes (y) or no (n).";;
+        esac
+    done
 }
 
 ###################################################################

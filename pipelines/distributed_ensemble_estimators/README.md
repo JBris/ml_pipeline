@@ -1,4 +1,4 @@
-# ensemble_estimators
+# distributed_ensemble_estimators
 
 ## Table of Contents  
 
@@ -6,4 +6,4 @@
 
 ### Introduction
 
-Perform sizing estimation using ensemble models.
+Perform distributed sizing estimation using ensemble models.
