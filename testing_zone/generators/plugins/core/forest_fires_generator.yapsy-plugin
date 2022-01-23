@@ -1,8 +1,0 @@
-[Core]
-Name = ForestFiresGenerator
-Module = forest_fires_generator
-
-[Documentation]
-Author = James Bristow
-Version = 1.0
-Description = Plugin for Forest Fires dataset
