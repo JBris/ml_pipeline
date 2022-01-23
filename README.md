@@ -9,7 +9,6 @@
 * [Ray](#ray)<a name="ray"/>
 * [PyCaret](#pycaret)<a name="pycaret"/>
 * [Optuna](#optuna)<a name="optuna"/>
-* [Docker](#docker)<a name="docker"/>
 
 ### Introduction
 
@@ -18,8 +17,6 @@ This repository contains a machine learning pipeline framework for running fruit
 Execute `init.sh` to initialise the pipeline tool. Several additional options are supported. Run `init.sh -h` for help.
 
 Edit `.env` and `config.local.ini` to specify your local environment configuration as required.
-
-Execute `init_docker.sh` to initialise the optional Docker stack.
 
 [Visit the documentation page for more information.](https://planttech.atlassian.net/wiki/spaces/EK3/pages/9994731521/User+manual).
 
@@ -64,9 +61,3 @@ PyCaret is a "low code" library that enables the construction of highly complex 
 Optuna is an optimisation library that is primarily being used for hyperparameter tuning.
 
 [More information can be found at https://optuna.org/](https://optuna.org/).
-
-### Docker
-
-An optional Docker stack has been included. This stack extends the features available in the framework.
-
-[See the docker-compose.yml file for the defined stack.](docker-compose.yml)

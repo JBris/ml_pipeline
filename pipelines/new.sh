@@ -29,7 +29,6 @@ create_project() {
     envsubst '${name} ${description}' < ../templates/run.py > "${1}/src/run.py"
     envsubst '${name} ${description}' < ../templates/README.md > "${1}/README.md"
     cp ../templates/gitignore "${1}/.gitignore"
-    cp ../templates/dockerignore "${1}/.dockerignore"
     cp ../templates/params.yaml "${1}/params.yaml"
 
     if [ "${2}" = "dvc" ]; then

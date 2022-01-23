@@ -10,7 +10,6 @@ usage() {
 
     Options:
         c   Create a new virtual environment (with the specified name) including dependencies using Conda.
-        d   Deploy the Docker stack.
         e   Recreate the .env file from .env.example.
         p   install Python requirements using pip
     """
@@ -43,15 +42,11 @@ fi
 
 create_file .env  .env.example
 
-while getopts "c:dep" opt; do
+while getopts "c:ep" opt; do
     case $opt in
         c)
             name=${OPTARG}
             conda env create -n "${name}" -f environment.yml python=3.8 || conda env update -n "${name}" -f environment.yml  
-            ;;
-        d)
-            . .env
-            ./init_docker.sh
             ;;
         e) 
             cp .env.example .env  
