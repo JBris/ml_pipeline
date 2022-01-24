@@ -44,7 +44,8 @@ create_project() {
             cd "${current_dir}"
         fi
     elif [ "${2}" = "mlflow" ]; then
-        cp ../templates/mlflow.sh "${1}/mlflow.sh"
+        cp ../templates/mlflow_run.sh "${1}/mlflow_run.sh"
+        cp ../templates/mlflow_ui.sh "${1}/mlflow_ui.sh"
         envsubst '${name} ${description}' < ../templates/MLproject > "${1}/MLproject"
         touch "${1}/conda.yaml"
     fi

@@ -14,7 +14,7 @@ params=
 
 usage() {
     echo """
-    Usage: ${0} [-d SIZING_DIR] [-r RAY_ADDRESS] [-r SCENARIO] [-u MLFLOW_TRACKING_URI] 
+    Usage: ${0} [-d SIZING_DIR] [-r RAY_ADDRESS] [-r PIPELINE_SCENARIO] [-u MLFLOW_TRACKING_URI] 
 
     Parameters:
         d   The root directory for the project.
@@ -38,6 +38,8 @@ add_param() {
 ###################################################################
 # Main
 ###################################################################
+
+help "${1}"
 
 while getopts ":d:r:s:u:" opt; do
     case $opt in

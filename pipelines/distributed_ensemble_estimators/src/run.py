@@ -59,6 +59,7 @@ EVALUATION_METRIC = CONFIG.get("evaluation_metric")
 SEARCH_ALGORITHM = CONFIG.get("distributed_search_algorithm")
 SEARCH_LIBRARY = CONFIG.get("distributed_search_library")
 N_ESTIMATORS = CONFIG.get("n_estimators")
+N_ITER = CONFIG.get("n_iter")
 
 # Random
 RANDOM_STATE = CONFIG.get("random_seed") 
@@ -68,9 +69,12 @@ RANDOM_STATE = CONFIG.get("random_seed")
 ##########################################################################################################
 
 def main() -> None:
-    #ray.init()
+    ray.init(address=os.environ["ip_head"])
+    print("Nodes in the Ray cluster:")
+    print(ray.nodes())
+
     #mlflow.set_tracking_uri(CONFIG.get("MLFLOW_TRACKING_URI"))
-    with mlflow.start_run() as run, tempfile.TemporaryDirectory() as tmp_dir:
+    #with mlflow.start_run() as run, tempfile.TemporaryDirectory() as tmp_dir:
         # Data split
         df = DATA.read_csv(FILE_NAME)
         data, data_unseen = DATA.train_test_split(df, frac = CONFIG.get("training_frac"), random_state = RANDOM_STATE)
@@ -81,17 +85,17 @@ def main() -> None:
             fold_strategy = CONFIG.get("fold_strategy"), log_experiment = False, experiment_name = EXPERIMENT_NAME, silent = True) 
 
         # Estimator fitting
-        top_models = ESTIMATOR.compare_models(n_select = 2, sort = EVALUATION_METRIC)
+        top_models = ESTIMATOR.compare_models(n_select = 2, sort = EVALUATION_METRIC, turbo = CONFIG.get("turbo"))
         tuned_top = [ 
             ESTIMATOR.tune_model(model, search_algorithm = SEARCH_ALGORITHM, optimize = EVALUATION_METRIC,
-                search_library = SEARCH_LIBRARY) 
+                search_library = SEARCH_LIBRARY, n_iter = N_ITER) 
             for model in top_models 
         ]
 
         # Ensemble estimators
         meta_model = ESTIMATOR.create_model(CONFIG.get("meta_model"))
         tuned_meta_model = ESTIMATOR.tune_model(meta_model, search_algorithm = SEARCH_ALGORITHM, 
-            optimize = EVALUATION_METRIC, search_library = SEARCH_LIBRARY) 
+            optimize = EVALUATION_METRIC, search_library = SEARCH_LIBRARY, n_iter = N_ITER)  
         stacking_ensemble = ESTIMATOR.stack_models(tuned_top, optimize = EVALUATION_METRIC, meta_model = tuned_meta_model)
         blending_ensemble = ESTIMATOR.blend_models(tuned_top, optimize = EVALUATION_METRIC, choose_better = True)
         boosting_ensemble = ESTIMATOR.ensemble_model(tuned_top[0], method = "Boosting", optimize = EVALUATION_METRIC, 

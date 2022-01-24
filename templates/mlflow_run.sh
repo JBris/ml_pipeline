@@ -39,6 +39,8 @@ add_param() {
 # Main
 ###################################################################
 
+help "${1}"
+
 while getopts ":d:r:s:u:" opt; do
     case $opt in
         d)
