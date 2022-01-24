@@ -70,6 +70,14 @@ class PyCaretEstimatorBase(metaclass = abc.ABCMeta):
     def automl(self, **kwargs):
         return
 
+    @abc.abstractmethod
+    def save_model(self, estimator, **kwargs):
+        return
+
+    @abc.abstractmethod
+    def load_model(self, model_name: str):
+        return
+
 class PyCaretRegressor(PyCaretEstimatorBase):
     """Estimator for regression."""
     def setup(self, **kwargs):
@@ -110,6 +118,12 @@ class PyCaretRegressor(PyCaretEstimatorBase):
 
     def automl(self, **kwargs):
         return pycaret.regression.automl(**kwargs)
+
+    def save_model(self, estimator, **kwargs):
+        return pycaret.regression.save_model(estimator, **kwargs)
+
+    def load_model(self, model_name: str):
+        return pycaret.regression.load_model(model_name)
 
 class PyCaretClassifier(PyCaretEstimatorBase):
     """Estimator for classification."""
@@ -152,3 +166,8 @@ class PyCaretClassifier(PyCaretEstimatorBase):
     def automl(self, **kwargs):
         return pycaret.classification.automl(**kwargs)
         
+    def save_model(self, estimator, **kwargs):
+        return pycaret.classification.save_model(estimator, **kwargs)
+
+    def load_model(self, model_name: str):
+        return pycaret.classification.load_model(model_name)
