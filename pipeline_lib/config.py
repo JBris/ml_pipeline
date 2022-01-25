@@ -8,9 +8,12 @@ A library of configuration tools for the machine learning pipeline.
 ### Imports  
 ##########################################################################################################
 
+# External
 import argparse
 import os
 import yaml
+
+from typing import Any
 
 ##########################################################################################################
 ### Library  
@@ -23,39 +26,53 @@ class Config:
         self.config = {}
         self.env_var_prefixes = ["MLFLOW_", "RAY_"]
 
-    def get(self, key: str):
+    def get(self, key: str) -> Any:
+        """Get a configuration value."""
         return self.config.get(key)
 
-    def set(self, key: str, value):
+    def get_as(self, key: str, v_type: type) -> Any:
+        """Get and cast a configuration value."""
+        return v_type(self.config.get(key))
+
+    def set(self, key: str, value: Any):
+        """Set a configuration value."""
         self.config[key] = value
         return self
 
     def from_env(self):
+        """Add configuration values from environment variables."""
         environment_vars = dict(os.environ)
         for k, v in environment_vars.items():
             for prefix in self.env_var_prefixes:
                 if k.startswith(prefix): 
                     self.config[k] = v
+        return self
             
     def from_yaml(self, path: str):
+        """Add configuration values from a YAML file."""
         with open(path) as f:
             options: dict = yaml.safe_load(f)
-            if options is None:
-                options = {}
-            self.extract_key_values(options)
-    
+            if options is not None:
+                self.extract_key_values(options)
+        return self
+
     def to_yaml(self, outfile: str, default_flow_style: bool = False):
+        """Export the configuration to a YAML file."""
         with open(outfile, 'w') as f:
             yaml.dump(self.config, f, default_flow_style = default_flow_style)
+        return self
 
     def from_parser(self, parser: argparse.ArgumentParser):
+        """Add configuration values from an argument parser."""
         args = parser.parse_args()
         arg_dict = vars(args)
-        self.extract_key_values(arg_dict)
+        return self.extract_key_values(arg_dict)
 
     def extract_key_values(self, options: dict):
+        """Extract keys and values from a dictionary, and add them to the configuration."""
         for k, v in options.items():
             self.config[k] = v
+        return self
     
 def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
     """
