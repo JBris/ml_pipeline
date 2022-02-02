@@ -46,7 +46,7 @@ library(knitr)
 library(ranger)
 library(randomForest)
 library(abcrf)
-
+library(flextable)
 ##########################################
 # Options
 
@@ -62,14 +62,16 @@ SEED <- 100
 
 ```{r data, echo = TRUE, message = FALSE, warning = TRUE, cache = TRUE}
 
-df = read_csv("data/GA_data.csv") %>%
+df = read_csv("data/ga_data_4217.csv") %>%
   drop_na() %>%
   round(2) %>%
   select(-c("aruco_ids", "fruit_id", "KPIN"))
 
 df %>%
+  head(5) %>%
+  round(2) %>%
   flextable() %>%
-  set_caption('Effects of kiwifruit shape variation on weight distribution parameters (89% credible intervals).') %>%
+  set_caption('Gold kiwifruits from KPIN 4217.') %>%
   autofit(add_w = 0.25, add_h = 0.25)
 
 ```
