@@ -187,12 +187,24 @@ class PyCaretClassifier(PyCaretEstimatorBase):
 
 def setup(estimator: PyCaretEstimatorBase, config: Config, data: pd.DataFrame, experiment_name: str):
     return estimator.setup(data = data, target = config.get("target"), fold_shuffle=True, 
-        imputation_type = config.get("imputation_type"), fold = config.get("k_fold"), fold_groups = config.get("fold_groups"),
+        imputation_type = config.get("imputation_type"), iterative_imputation_iters = config.get("iterative_imputation_iters"),
+        fold = config.get("k_fold"), fold_groups = config.get("fold_groups"),
         fold_strategy = config.get("fold_strategy"), use_gpu = True, polynomial_features = config.get("polynomial_features"), 
         polynomial_degree =  config.get("polynomial_degree"), remove_multicollinearity = config.get("remove_multicollinearity"), 
         log_experiment = True, feature_selection = config.get("feature_selection"),  
         feature_selection_method = config.get("feature_selection_method"),
         feature_selection_threshold = config.get("feature_selection_threshold"), feature_interaction = config.get("feature_interaction"),
         feature_ratio = config.get("feature_ratio"), interaction_threshold = config.get("interaction_threshold"),
+        experiment_name = experiment_name, ignore_features = config.get("ignore_features"), log_plots = True, 
+        log_profile = True, log_data = True, silent = True, profile = True, session_id = config.get("random_seed")) 
+
+def unsupervised_setup(data, config, experiment_name, type: str = "clustering"):
+    if type == "anomaly":
+        from pycaret.anomaly import setup
+    else:
+        from pycaret.clustering import setup
+    
+    return setup(data = data, imputation_type = config.get("imputation_type"),
+        use_gpu = True, remove_multicollinearity = config.get("remove_multicollinearity"), log_experiment = True, 
         experiment_name = experiment_name, ignore_features = config.get("ignore_features"), log_plots = True, 
         log_profile = True, log_data = True, silent = True, profile = True, session_id = config.get("random_seed")) 

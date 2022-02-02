@@ -1,21 +1,12 @@
 # Random
 random_seed: 100
 
-# Training
+# Data
+target: null
 training_frac: 0.8
-search_algorithm: random
-distributed_search_algorithm: optuna
-search_library: scikit-learn 
-distributed_search_library: tune-sklearn
 fold_strategy: kfold
 k_fold: 5
-imputation_type: simple
 fold_groups: null
-meta_model: dt
-n_select: 5
-n_estimators: 10
-n_iter: 10
-turbo: false
 ignore_features: null
 polynomial_features: false
 polynomial_degree: 2
@@ -26,6 +17,21 @@ feature_interaction: false
 feature_ratio: false
 interaction_threshold: 0.01
 remove_multicollinearity: false
+
+# Training
+search_algorithm: random
+custom_grid: null
+distributed_search_algorithm: optuna
+search_library: scikit-learn 
+distributed_search_library: tune-sklearn
+imputation_type: simple
+iterative_imputation_iters: 5
+meta_model: dt
+n_select: 5
+n_estimators: 10
+n_iter: 10
+turbo: false
+supervised_estimator: lr
 
 # Evaluation
 evaluation_metric: MSE

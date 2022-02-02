@@ -92,14 +92,14 @@ def main() -> None:
     top_models = ESTIMATOR.compare_models(n_select = CONFIG.get("n_select"), sort = EVALUATION_METRIC, turbo = CONFIG.get("turbo"))
     tuned_top = [ 
         ESTIMATOR.tune_model(model, search_algorithm = SEARCH_ALGORITHM, optimize = EVALUATION_METRIC,
-            search_library = SEARCH_LIBRARY, n_iter = N_ITER) 
+            search_library = SEARCH_LIBRARY, n_iter = N_ITER, custom_grid = CONFIG.get("custom_grid")) 
         for model in top_models 
     ]
 
     # Ensemble estimators
     meta_model = ESTIMATOR.create_model(CONFIG.get("meta_model"))
     tuned_meta_model = ESTIMATOR.tune_model(meta_model, search_algorithm = SEARCH_ALGORITHM, 
-        optimize = EVALUATION_METRIC, search_library = SEARCH_LIBRARY, n_iter = N_ITER) 
+        optimize = EVALUATION_METRIC, search_library = SEARCH_LIBRARY, n_iter = N_ITER, custom_grid = CONFIG.get("custom_grid"))  
     stacking_ensemble = ESTIMATOR.stack_models(tuned_top, optimize = EVALUATION_METRIC, meta_model = tuned_meta_model)
     blending_ensemble = ESTIMATOR.blend_models(tuned_top, optimize = EVALUATION_METRIC, choose_better = True)
     boosting_ensemble = ESTIMATOR.ensemble_model(tuned_top[0], method = "Boosting", optimize = EVALUATION_METRIC, 
