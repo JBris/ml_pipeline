@@ -17,6 +17,9 @@ feature_interaction: false
 feature_ratio: false
 interaction_threshold: 0.01
 remove_multicollinearity: false
+categorical_features: null
+ordinal_features: null
+numeric_features: null
 
 # Training
 search_algorithm: random
@@ -36,3 +39,4 @@ supervised_estimator: lr
 # Evaluation
 evaluation_metric: MSE
   
+

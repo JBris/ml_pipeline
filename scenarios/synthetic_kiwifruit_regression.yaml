@@ -3,5 +3,6 @@ target: Fresh Weight (FW) (g)
 est_task: regression
 evaluation_metric: MSE
 fold_groups: null
-n_estimators: 100
 n_select: 5
+n_estimators: 10
+n_iter: 10

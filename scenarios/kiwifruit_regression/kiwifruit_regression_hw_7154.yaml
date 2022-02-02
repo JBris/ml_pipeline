@@ -1,0 +1,11 @@
+file_path: pipelines/kiwi_datasets/data/hw_data_7154.csv
+target: gt_weight
+est_task: regression
+evaluation_metric: MSE
+fold_groups: null
+n_select: 1
+n_estimators: 1
+n_iter: 1
+ignore_features: ["aruco_ids", "fruit_id", "KPIN"]
+label_feature: aruco_ids
+contamination_fraction: 0.1

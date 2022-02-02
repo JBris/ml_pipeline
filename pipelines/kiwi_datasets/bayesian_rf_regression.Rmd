@@ -1,0 +1,112 @@
+---
+title: "Bayesian Random Forest Regression"
+author: "James Bristow"
+date: "`r format(Sys.time(), '%d/%m/%y')`"
+output:
+  bookdown::word_document2:
+    number_sections: yes
+  bookdown::pdf_document2: default
+  bookdown::html_document2:
+    toc_float: no
+mainfont: Times New Roman
+fig_caption: yes
+fontsize: 12pt
+linkcolor: black
+urlcolor: black
+citecolor: black
+geometry: margin = 1.25in
+theme: yeti
+toc: yes
+toc_depth: 4
+highlight: tango
+link-citations: no
+lof: yes
+lot: yes
+bibliography: references.bib
+csl: apa.csl
+header-includes:
+  \usepackage{fvextra}
+  \usepackage{amsmath}
+  \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+We'll compare the use of non-Bayesian and Bayesian random forest regression.
+
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE, cache = FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+##########################################
+# Imports
+
+library(tidyverse)
+library(broom)
+library(kableExtra)
+library(knitr)
+library(ranger)
+library(randomForest)
+library(abcrf)
+
+##########################################
+# Options
+
+options(digits = 4)
+options(ggrepel.max.overlaps = Inf)
+
+##########################################
+# Constants
+
+SEED <- 100
+
+```
+
+```{r data, echo = TRUE, message = FALSE, warning = TRUE, cache = TRUE}
+
+df = read_csv("data/ga_data_7154.csv") %>%
+  drop_na()
+
+```
+
+
+```{r rf_model, echo = TRUE, message = FALSE, warning = TRUE, cache = TRUE}
+
+rf_model = randomForest(gt_weight ~ MA + ma + area + angle + perimeter, ntree = 500, mtry = 1, data = df)
+
+```
+
+```{r rf_plot, echo = FALSE, message = FALSE, warning = FALSE, cache = TRUE}
+
+rf_predict = predict(rf_model, df) %>% 
+  as_tibble()  
+
+df %>% 
+  ggplot(aes(gt_weight, rf_predict$value)) +
+  geom_point(size = 1, color = "red") +
+  geom_line(aes(gt_weight, rf_predict$value), color = "blue", size = 0.5) +
+  labs(x = 'Actual weight (g)', y = 'Predicted weight (g)') +
+  ggtitle("Random Forest regression")
+
+
+```
+
+```{r abc_rf, echo = FALSE, message = FALSE, warning = FALSE, cache = TRUE}
+
+abc_rf_mod = regAbcrf(gt_weight ~ MA + ma + area + angle + perimeter, ntree = 500, data = df, replace = T, paral = T, mtry = 1)
+abc_predict = predict(abc_rf_mod, df, df) %>% 
+  as_tibble()  
+
+```
+
+```{r abc_rf_plot, echo = FALSE, message = FALSE, warning = FALSE, cache = TRUE}
+
+df %>% 
+  ggplot(aes(x = gt_weight, y = abc_predict$expectation)) +
+  geom_point(size = 1, color = "red") +
+  geom_line(color = "blue", size = 0.5) +
+  geom_ribbon(aes(ymin=abc_predict$`quantile=0.025`, ymax=abc_predict$`quantile=0.975`), linetype=2, alpha=0.1) +
+  labs(x = 'Actual weight (g)', y = 'Predicted weight (g)') +
+  ggtitle("Approximate Bayesian Computation Random Forest regression")
+
+
+```
+
