@@ -62,8 +62,15 @@ SEED <- 100
 
 ```{r data, echo = TRUE, message = FALSE, warning = TRUE, cache = TRUE}
 
-df = read_csv("data/ga_data_7154.csv") %>%
-  drop_na()
+df = read_csv("data/GA_data.csv") %>%
+  drop_na() %>%
+  round(2) %>%
+  select(-c("aruco_ids", "fruit_id", "KPIN"))
+
+df %>%
+  flextable() %>%
+  set_caption('Effects of kiwifruit shape variation on weight distribution parameters (89% credible intervals).') %>%
+  autofit(add_w = 0.25, add_h = 0.25)
 
 ```
 
@@ -83,8 +90,8 @@ df %>%
   ggplot(aes(gt_weight, rf_predict$value)) +
   geom_point(size = 1, color = "red") +
   geom_line(aes(gt_weight, rf_predict$value), color = "blue", size = 0.5) +
-  labs(x = 'Actual weight (g)', y = 'Predicted weight (g)') +
-  ggtitle("Random Forest regression")
+  labs(x = 'Actual weight (g)', y = 'Predicted weight (g)')  
+  # ggtitle("Random Forest regression")
 
 
 ```
@@ -104,8 +111,8 @@ df %>%
   geom_point(size = 1, color = "red") +
   geom_line(color = "blue", size = 0.5) +
   geom_ribbon(aes(ymin=abc_predict$`quantile=0.025`, ymax=abc_predict$`quantile=0.975`), linetype=2, alpha=0.1) +
-  labs(x = 'Actual weight (g)', y = 'Predicted weight (g)') +
-  ggtitle("Approximate Bayesian Computation Random Forest regression")
+  labs(x = 'Actual weight (g)', y = 'Predicted weight (g)')  
+  # ggtitle("Approximate Bayesian Computation Random Forest regression")
 
 
 ```
