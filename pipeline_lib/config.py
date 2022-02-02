@@ -79,12 +79,12 @@ def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
     Get a new configuration object.
 
     Configuration Hierarchy:
-        1. Environment variables
-        2. config.global.yaml
-        3. The project's params.yaml
-        4. Arguments from parser 
-        5. The scenario file.
-        6. config.local.yaml
+        1. config.global.yaml
+        2. The project's params.yaml
+        3. Arguments from parser 
+        4. The scenario file
+        5. config.local.yaml
+        6. An optional config.yaml file to replicate pipelines
 
     Parameters
     --------------
@@ -114,7 +114,10 @@ def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
     local_config = f"{base_dir}/config.local.yaml"
     if os.path.isfile(local_config):
         config.from_yaml(local_config)
-        
+    
+    if config.get("from_config") != ".":
+        config.from_yaml(config.get("from_config"))
+
     return config
 
 def add_argument(parser: argparse.ArgumentParser, name: str, default, arg_help: str, 

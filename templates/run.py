@@ -32,8 +32,6 @@ add_argument(parser, "--from_config", ".", "Override parameters using a config.y
 # Config
 PROJECT_NAME = "$name"
 CONFIG = get_config(base_dir, parser)
-if CONFIG.get("from_config").strip() != ".":
-    CONFIG.from_yaml(CONFIG.get("from_config"))
 
 EXPERIMENT_NAME = f"{PROJECT_NAME}_{CONFIG.get('scenario')}"
 BASE_DIR = CONFIG.get("base_dir")

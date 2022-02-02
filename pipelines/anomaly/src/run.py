@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.abspath(base_dir))
 # Internal 
 from pipeline_lib.config import add_argument, get_config
 from pipeline_lib.data import Data, join_path
-from pipeline_lib.estimator import PyCaretClassifier, PyCaretRegressor
+from pycaret.anomaly import setup
 
 ##########################################################################################################
 ### Parameters
@@ -37,9 +37,7 @@ add_argument(parser, "--from_config", ".", "Override parameters using a config.y
 # Config
 PROJECT_NAME = "ensemble_estimators"
 CONFIG = get_config(base_dir, parser)
-if CONFIG.get("from_config").strip() != ".":
-    CONFIG.from_yaml(CONFIG.get("from_config"))
-    
+
 EXPERIMENT_NAME = f"{PROJECT_NAME}_{CONFIG.get('scenario')}"
 BASE_DIR = CONFIG.get("base_dir")
 if BASE_DIR is None:
@@ -47,15 +45,11 @@ if BASE_DIR is None:
 
 # Data
 DATA = Data()
-FILE_NAME = join_path(BASE_DIR, CONFIG.get("filename"))
+FILE_NAME = join_path(BASE_DIR, CONFIG.get("file_path"))
 TARGET_VAR = CONFIG.get("target")
 
 # Estimator
 EST_TASK = CONFIG.get("est_task")
-if EST_TASK == "regression":
-    ESTIMATOR = PyCaretRegressor()
-else:
-    ESTIMATOR = PyCaretClassifier()
 EVALUATION_METRIC = CONFIG.get("evaluation_metric")
 
 # Tuning
@@ -83,8 +77,13 @@ def main() -> None:
         # Data preprocessing
         est_setup = ESTIMATOR.setup(data = data, target = TARGET_VAR, fold_shuffle=True, 
             imputation_type = CONFIG.get("imputation_type"), fold = CONFIG.get("k_fold"), fold_groups = CONFIG.get("fold_groups"),
-            fold_strategy = CONFIG.get("fold_strategy"), use_gpu = True, log_experiment = True, experiment_name = EXPERIMENT_NAME,
-            log_plots = True, log_profile = True, log_data = True, silent = True, session_id = RANDOM_STATE) 
+            fold_strategy = CONFIG.get("fold_strategy"), use_gpu = True, polynomial_features = CONFIG.get("polynomial_features"), 
+            polynomial_degree =  CONFIG.get("polynomial_degree"), remove_multicollinearity = CONFIG.get("remove_multicollinearity"), log_experiment = True, 
+            feature_selection = CONFIG.get("feature_selection"),  feature_selection_method = CONFIG.get("feature_selection_method"),
+            feature_selection_threshold = CONFIG.get("feature_selection_threshold"), feature_interaction = CONFIG.get("feature_interaction"),
+            feature_ratio = CONFIG.get("feature_ratio"), interaction_threshold = CONFIG.get("interaction_threshold"),
+            experiment_name = EXPERIMENT_NAME, ignore_features = CONFIG.get("ignore_features"), log_plots = True, 
+            log_profile = True, log_data = True, silent = True, session_id = RANDOM_STATE) 
 
         # Estimator fitting
         top_models = ESTIMATOR.compare_models(n_select = CONFIG.get("n_select"), sort = EVALUATION_METRIC, turbo = CONFIG.get("turbo"))
@@ -128,9 +127,12 @@ def main() -> None:
         mlflow.log_artifact(config_yaml)
         
         final_ensemble = ESTIMATOR.finalize_model(best_model)
-        ensemble_model_residuals = ESTIMATOR.plot_model(final_ensemble, plot = 'residuals', save = tmp_dir)
-        mlflow.log_artifact(join_path(tmp_dir, ensemble_model_residuals))
         mlflow.sklearn.log_model(final_ensemble, EXPERIMENT_NAME, registered_model_name = EXPERIMENT_NAME)
+
+        for plot in ["residuals", "error"]:
+            ensemble_model_plot = ESTIMATOR.plot_model(final_ensemble, plot = plot, save = tmp_dir)
+            mlflow.log_artifact(join_path(tmp_dir, ensemble_model_plot))
+
 
         mlflow.set_tag("project", PROJECT_NAME)
         mlflow.set_tag("experiment", EXPERIMENT_NAME)

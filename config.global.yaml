@@ -9,7 +9,23 @@ search_library: scikit-learn
 distributed_search_library: tune-sklearn
 fold_strategy: kfold
 k_fold: 5
-imputation_type: iterative
+imputation_type: simple
+fold_groups: null
+meta_model: dt
+n_select: 5
+n_estimators: 10
+n_iter: 10
+turbo: false
+ignore_features: null
+polynomial_features: false
+polynomial_degree: 2
+feature_selection: false
+feature_selection_threshold: 0.8
+feature_selection_method: classic
+feature_interaction: false
+feature_ratio: false
+interaction_threshold: 0.01
+remove_multicollinearity: false
 
 # Evaluation
 evaluation_metric: MSE

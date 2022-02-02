@@ -4,4 +4,4 @@ meta_model: dt
 n_select: 5
 n_estimators: 10
 n_iter: 10
-turbo: true
+turbo: false

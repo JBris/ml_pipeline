@@ -1,4 +1,4 @@
-filename: data_gen/data/fresh_weight_g_synth.csv
+file_path: data_gen/data/fresh_weight_g_synth.csv
 target: Fresh Weight (FW) (g)
 est_task: regression
 evaluation_metric: MSE

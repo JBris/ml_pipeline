@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.abspath(base_dir))
 # Internal 
 from pipeline_lib.config import add_argument, get_config
 from pipeline_lib.data import Data, join_path
-from pipeline_lib.estimator import PyCaretClassifier, PyCaretRegressor
+from pipeline_lib.estimator import PyCaretClassifier, PyCaretRegressor, setup
 
 ##########################################################################################################
 ### Parameters
@@ -37,9 +37,7 @@ add_argument(parser, "--from_config", ".", "Override parameters using a config.y
 # Config
 PROJECT_NAME = "ensemble_estimators"
 CONFIG = get_config(base_dir, parser)
-if CONFIG.get("from_config").strip() != ".":
-    CONFIG.from_yaml(CONFIG.get("from_config"))
-    
+
 EXPERIMENT_NAME = f"{PROJECT_NAME}_{CONFIG.get('scenario')}"
 BASE_DIR = CONFIG.get("base_dir")
 if BASE_DIR is None:
@@ -47,7 +45,7 @@ if BASE_DIR is None:
 
 # Data
 DATA = Data()
-FILE_NAME = join_path(BASE_DIR, CONFIG.get("filename"))
+FILE_NAME = join_path(BASE_DIR, CONFIG.get("file_path"))
 TARGET_VAR = CONFIG.get("target")
 
 # Estimator
@@ -81,10 +79,7 @@ def main() -> None:
         data, data_unseen = DATA.train_test_split(df, frac = CONFIG.get("training_frac"), random_state = RANDOM_STATE)
 
         # Data preprocessing
-        est_setup = ESTIMATOR.setup(data = data, target = TARGET_VAR, fold_shuffle=True, 
-            imputation_type = CONFIG.get("imputation_type"), fold = CONFIG.get("k_fold"), fold_groups = CONFIG.get("fold_groups"),
-            fold_strategy = CONFIG.get("fold_strategy"), use_gpu = True, log_experiment = True, experiment_name = EXPERIMENT_NAME,
-            log_plots = True, log_profile = True, log_data = True, silent = True, session_id = RANDOM_STATE) 
+        est_setup = setup(ESTIMATOR, CONFIG, data, EXPERIMENT_NAME)
 
         # Estimator fitting
         top_models = ESTIMATOR.compare_models(n_select = CONFIG.get("n_select"), sort = EVALUATION_METRIC, turbo = CONFIG.get("turbo"))
@@ -128,9 +123,12 @@ def main() -> None:
         mlflow.log_artifact(config_yaml)
         
         final_ensemble = ESTIMATOR.finalize_model(best_model)
-        ensemble_model_residuals = ESTIMATOR.plot_model(final_ensemble, plot = 'residuals', save = tmp_dir)
-        mlflow.log_artifact(join_path(tmp_dir, ensemble_model_residuals))
         mlflow.sklearn.log_model(final_ensemble, EXPERIMENT_NAME, registered_model_name = EXPERIMENT_NAME)
+
+        for plot in ["residuals", "error"]:
+            ensemble_model_plot = ESTIMATOR.plot_model(final_ensemble, plot = plot, save = tmp_dir)
+            mlflow.log_artifact(join_path(tmp_dir, ensemble_model_plot))
+
 
         mlflow.set_tag("project", PROJECT_NAME)
         mlflow.set_tag("experiment", EXPERIMENT_NAME)

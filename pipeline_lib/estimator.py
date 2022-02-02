@@ -9,8 +9,11 @@ A library of estimators for the machine learning pipeline.
 ##########################################################################################################
 
 import abc
+import pandas as pd
 import pycaret.classification
 import pycaret.regression
+
+from pipeline_lib.config import Config
 
 ##########################################################################################################
 ### Library  
@@ -57,6 +60,10 @@ class PyCaretEstimatorBase(metaclass = abc.ABCMeta):
     @abc.abstractmethod
     def plot_model(self, estimator, **kwargs):
         return  
+
+    @abc.abstractmethod
+    def interpret_model(self, estimator, **kwargs):
+        return
 
     @abc.abstractmethod
     def blend_models(self, estimators: list, **kwargs):
@@ -110,6 +117,9 @@ class PyCaretRegressor(PyCaretEstimatorBase):
     def plot_model(self, estimator, **kwargs):
         return pycaret.regression.plot_model(estimator, **kwargs)
 
+    def interpret_model(self, estimator, **kwargs):
+        return pycaret.regression.interpret_model(estimator, **kwargs)
+
     def blend_models(self, estimators: list, **kwargs):
         return pycaret.regression.blend_models(estimators, **kwargs)
 
@@ -157,6 +167,9 @@ class PyCaretClassifier(PyCaretEstimatorBase):
     def plot_model(self, estimator, **kwargs):
         return pycaret.classification.plot_model(estimator, **kwargs)
 
+    def interpret_model(self, estimator, **kwargs):
+        return pycaret.classification.interpret_model(estimator, **kwargs)
+
     def blend_models(self, estimators: list, **kwargs):
         return pycaret.classification.blend_models(estimators, **kwargs)
 
@@ -171,3 +184,15 @@ class PyCaretClassifier(PyCaretEstimatorBase):
 
     def load_model(self, model_name: str):
         return pycaret.classification.load_model(model_name)
+
+def setup(estimator: PyCaretEstimatorBase, config: Config, data: pd.DataFrame, experiment_name: str):
+    return estimator.setup(data = data, target = config.get("target"), fold_shuffle=True, 
+        imputation_type = config.get("imputation_type"), fold = config.get("k_fold"), fold_groups = config.get("fold_groups"),
+        fold_strategy = config.get("fold_strategy"), use_gpu = True, polynomial_features = config.get("polynomial_features"), 
+        polynomial_degree =  config.get("polynomial_degree"), remove_multicollinearity = config.get("remove_multicollinearity"), 
+        log_experiment = True, feature_selection = config.get("feature_selection"),  
+        feature_selection_method = config.get("feature_selection_method"),
+        feature_selection_threshold = config.get("feature_selection_threshold"), feature_interaction = config.get("feature_interaction"),
+        feature_ratio = config.get("feature_ratio"), interaction_threshold = config.get("interaction_threshold"),
+        experiment_name = experiment_name, ignore_features = config.get("ignore_features"), log_plots = True, 
+        log_profile = True, log_data = True, silent = True, profile = True, session_id = config.get("random_seed")) 
