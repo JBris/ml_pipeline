@@ -26,8 +26,9 @@ parser = argparse.ArgumentParser(
     description = 'Perform sizing estimation using ensemble models.'
 )
     
-add_argument(parser, "--base_dir", "", "The base project directory", str)
-add_argument(parser, "--scenario", "", "The pipeline scenario file", str)
+add_argument(parser, "--base_dir", ".", "The base project directory", str)
+add_argument(parser, "--scenario", ".", "The pipeline scenario file", str)
+add_argument(parser, "--from_config", ".", "Override parameters using a config.yaml file", str)
 
 ##########################################################################################################
 ### Constants
@@ -36,6 +37,9 @@ add_argument(parser, "--scenario", "", "The pipeline scenario file", str)
 # Config
 PROJECT_NAME = "ensemble_estimators"
 CONFIG = get_config(base_dir, parser)
+if CONFIG.get("from_config").strip() != ".":
+    CONFIG.from_yaml(CONFIG.get("from_config"))
+    
 EXPERIMENT_NAME = f"{PROJECT_NAME}_{CONFIG.get('scenario')}"
 BASE_DIR = CONFIG.get("base_dir")
 if BASE_DIR is None:

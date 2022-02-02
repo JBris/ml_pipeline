@@ -14,9 +14,10 @@ params=
 
 usage() {
     echo """
-    Usage: ${0} [-d SIZING_DIR] [-r RAY_ADDRESS] [-r PIPELINE_SCENARIO] [-u MLFLOW_TRACKING_URI] 
+    Usage: ${0} [-c CONFIG_FILE] [-d SIZING_DIR] [-r RAY_ADDRESS] [-r SCENARIO] [-u MLFLOW_TRACKING_URI] 
 
     Parameters:
+        c   The optional config.yaml file.
         d   The root directory for the project.
         r   The Ray address.
         s   The pipeline scenario file.
@@ -41,8 +42,10 @@ add_param() {
 
 help "${1}"
 
-while getopts ":d:r:s:u:" opt; do
+while getopts "c:d:r:s:u" opt; do
     case $opt in
+        c)
+            CONFIG_FILE=${OPTARG}
         d)
             SIZING_DIR=${OPTARG}
             ;;
@@ -61,15 +64,17 @@ while getopts ":d:r:s:u:" opt; do
   esac
 done
 
+shift $(($OPTIND - 1))
+
 # Exports
 export MLFLOW_TRACKING_URI
 export RAY_ADDRESS
 echo "MLFlow address: ${MLFLOW_TRACKING_URI}"
 echo "Ray address: ${RAY_ADDRESS}"
 
-# Target directory 
 # Parameter overrides
+[[ ! -z "${CONFIG_FILE}" ]] && add_param base_dir "${CONFIG_FILE}"
 [[ ! -z "${SIZING_DIR}" ]] && add_param base_dir "${SIZING_DIR}"
 [[ ! -z "${PIPELINE_SCENARIO}" ]] && add_param scenario "${PIPELINE_SCENARIO}"
 
-mlflow run ${MLFLOW_CONDA} . ${params}
+mlflow run ${MLFLOW_CONDA} . -b ${MLFLOW_BACKEND} ${params}

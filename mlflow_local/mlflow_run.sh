@@ -14,10 +14,11 @@ params=
 
 usage() {
     echo """
-    Usage: ${0} [pipeline_directory] [-d SIZING_DIR] [-r RAY_ADDRESS] [-r SCENARIO] [-u MLFLOW_TRACKING_URI] 
+    Usage: ${0} [-c CONFIG_FILE] [-d SIZING_DIR] [-r RAY_ADDRESS] [-r SCENARIO] [-u MLFLOW_TRACKING_URI] [pipeline_directory]
 
     Parameters:
-        pipeline_directory
+        pipeline_directory  The directory for MLflow pipelines.
+        c   The optional config.yaml file.
         d   The root directory for the project.
         r   The Ray address.
         s   The pipeline scenario file.
@@ -42,8 +43,11 @@ add_param() {
 
 help "${1}"
 
-while getopts ":d:r:s:u:" opt; do
+while getopts "c:d:r:s:u" opt; do
     case $opt in
+        c)
+            CONFIG_FILE=${OPTARG}
+            ;;
         d)
             SIZING_DIR=${OPTARG}
             ;;
@@ -62,14 +66,16 @@ while getopts ":d:r:s:u:" opt; do
   esac
 done
 
+shift $(($OPTIND - 1))
+
 # Exports
 export MLFLOW_TRACKING_URI
 export RAY_ADDRESS
 echo "MLFlow address: ${MLFLOW_TRACKING_URI}"
 echo "Ray address: ${RAY_ADDRESS}"
 
-# Target directory 
 # Parameter overrides
+[[ ! -z "${CONFIG_FILE}" ]] && add_param from_config "${CONFIG_FILE}"
 [[ ! -z "${SIZING_DIR}" ]] && add_param base_dir "${SIZING_DIR}"
 [[ ! -z "${PIPELINE_SCENARIO}" ]] && add_param scenario "${PIPELINE_SCENARIO}"
 

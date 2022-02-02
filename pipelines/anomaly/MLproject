@@ -5,7 +5,7 @@ name: anomaly
 entry_points:
   main:
     parameters:
-      base_dir: { type: string, default: "" } 
-      scenario: { type: string, default: "" } 
-    command: python src/run.py  --base_dir {base_dir} --scenario {scenario} 
-  
+      base_dir: { type: string, default: "." } 
+      scenario: { type: string, default: "." } 
+      from_config: { type: string, default: "." } 
+    command: python src/run.py  --base_dir {base_dir} --scenario {scenario} --from_config {from_config}
