@@ -1,7 +1,3 @@
-evaluation_metric: MSE
-fold_groups: null
-meta_model: dt
-n_select: 5
-n_estimators: 10
-n_iter: 10
-turbo: false
+clustering_model: kmeans
+num_clusters: 4
+clustering_plot: tsne

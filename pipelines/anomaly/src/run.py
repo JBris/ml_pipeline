@@ -51,11 +51,6 @@ TARGET_VAR = CONFIG.get("target")
 # Model
 MODEL = CONFIG.get("anomaly_model") #abod, cluster, cof, histogram, knn, lof, svm, pca, mcd, sod, sos
 
-# Tuning
-SEARCH_ALGORITHM = CONFIG.get("search_algorithm")
-SEARCH_LIBRARY = CONFIG.get("search_library")
-N_ITER = CONFIG.get("n_iter")
-
 # Random
 RANDOM_STATE = CONFIG.get("random_seed") 
 
@@ -74,7 +69,7 @@ def main() -> None:
         est_setup = unsupervised_setup(df, CONFIG, EXPERIMENT_NAME, "anomaly")
 
         # Estimator fitting
-        model = create_model(MODEL, fraction = CONFIG.get("fraction"))
+        model = create_model(MODEL, fraction = CONFIG.get("contamination_fraction"))
 
         if TARGET_VAR:
             model = tune_model(model, supervised_target = TARGET_VAR, supervised_estimator = CONFIG.get("supervised_estimator"),
