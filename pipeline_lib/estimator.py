@@ -198,6 +198,7 @@ def setup(estimator: PyCaretEstimatorBase, config: Config, data: pd.DataFrame, e
         feature_selection_method = config.get("feature_selection_method"),
         feature_selection_threshold = config.get("feature_selection_threshold"), feature_interaction = config.get("feature_interaction"),
         feature_ratio = config.get("feature_ratio"), interaction_threshold = config.get("interaction_threshold"),
+        pca = config.get("pca"), pca_method = config.get("pca_method"), pca_components = config.get("pca_components"),
         log_experiment = use_mlflow, experiment_name = experiment_name, ignore_features = config.get("ignore_features"), 
         log_plots = use_mlflow,  log_profile = use_mlflow, log_data = use_mlflow, silent = True, profile = use_mlflow, 
         session_id = config.get("random_seed")) 
@@ -211,5 +212,6 @@ def unsupervised_setup(data, config, experiment_name, type: str = "clustering"):
     
     return setup(data = data, imputation_type = config.get("imputation_type"),
         use_gpu = True, remove_multicollinearity = config.get("remove_multicollinearity"), log_experiment = use_mlflow, 
+        pca = config.get("pca"), pca_method = config.get("pca_method"), pca_components = config.get("pca_components"),
         experiment_name = experiment_name, ignore_features = config.get("ignore_features"), log_plots = use_mlflow, 
         log_profile = use_mlflow, log_data = use_mlflow, silent = True, profile = use_mlflow, session_id = config.get("random_seed")) 

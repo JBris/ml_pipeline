@@ -22,10 +22,15 @@ feature_selection_method: classic
 feature_interaction: false
 feature_ratio: false
 interaction_threshold: 0.01
-remove_multicollinearity: false
 categorical_features: null
 ordinal_features: null
 numeric_features: null
+
+# Preprocessing
+pca: false
+pca_method: linear # kernel, incremental
+pca_components: null
+remove_multicollinearity: false
 
 # Training
 search_algorithm: random
@@ -39,7 +44,7 @@ meta_model: dt
 n_select: 5
 n_estimators: 10
 n_iter: 10
-turbo: false
+turbo: true
 supervised_estimator: lr
 
 # Evaluation

@@ -46,6 +46,7 @@ while getopts "c:d:r:s:u" opt; do
     case $opt in
         c)
             CONFIG_FILE=${OPTARG}
+            ;;
         d)
             SIZING_DIR=${OPTARG}
             ;;
