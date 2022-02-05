@@ -112,8 +112,8 @@ def main() -> None:
         mlflow.end_run()
         tmp_dir.cleanup()
     else:
-        pipeline_optimizer.export(f"{EXPERIMENT_NAME}.py")
-        CONFIG.to_yaml("config.yaml")
+        pipeline_optimizer.export(join_path("data", f"{EXPERIMENT_NAME}.py"))
+        CONFIG.to_yaml(join_path("data", "config.yaml"))
 
 if __name__ == "__main__":
     main()

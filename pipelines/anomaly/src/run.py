@@ -105,10 +105,10 @@ def main() -> None:
         tmp_dir.cleanup()
     else:
         from joblib import dump
-        dump(model, f"{EXPERIMENT_NAME}.joblib")
-        CONFIG.to_yaml("config.yaml")
-        assigned_df.to_csv(f"{EXPERIMENT_NAME}.csv")
-        anomaly_plot = plot_model(model, plot = CONFIG.get("anomaly_plot"), save = True, 
+        dump(model, join_path("data", f"{EXPERIMENT_NAME}.joblib")) 
+        CONFIG.to_yaml(join_path("data", "config.yaml"))
+        assigned_df.to_csv(join_path("data", f"{EXPERIMENT_NAME}.csv")) 
+        plot_model(model, plot = CONFIG.get("anomaly_plot"), save = "data", 
             feature = CONFIG.get("label_feature"), label = True)
 
 if __name__ == "__main__":
