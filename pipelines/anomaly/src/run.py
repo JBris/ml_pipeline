@@ -4,7 +4,6 @@
 
 # External
 import argparse
-import mlflow
 import os, sys
 import tempfile
 
@@ -54,39 +53,63 @@ MODEL = CONFIG.get("anomaly_model") #abod, cluster, cof, histogram, knn, lof, sv
 # Random
 RANDOM_STATE = CONFIG.get("random_seed") 
 
+# Distributed
+RUN_DISTRIBUTED = CONFIG.get("run_distributed")
+
+# MLFlow
+USE_MLFLOW = CONFIG.get("use_mlflow")
+
 ##########################################################################################################
 ### Pipeline
 ##########################################################################################################
 
 def main() -> None:
-    mlflow.set_tracking_uri(CONFIG.get("MLFLOW_TRACKING_URI"))
-    with mlflow.start_run() as run, tempfile.TemporaryDirectory() as tmp_dir:
+    if USE_MLFLOW:
+        import mlflow
+        mlflow.set_tracking_uri(CONFIG.get("MLFLOW_TRACKING_URI")) # Enable tracking using MLFlow
+        mlflow.start_run()
+        tmp_dir = tempfile.TemporaryDirectory()
 
-        # Data split
-        df = DATA.read_csv(FILE_NAME)
+    # Data split
+    df = DATA.read_csv(FILE_NAME)
 
-        # Data preprocessing
-        est_setup = unsupervised_setup(df, CONFIG, EXPERIMENT_NAME, "anomaly")
+    # Data preprocessing
+    est_setup = unsupervised_setup(df, CONFIG, EXPERIMENT_NAME, "anomaly")
 
-        # Estimator fitting
-        model = create_model(MODEL, fraction = CONFIG.get("contamination_fraction"))
+    # Estimator fitting
+    model = create_model(MODEL, fraction = CONFIG.get("contamination_fraction"))
 
-        if TARGET_VAR:
-            model = tune_model(model, supervised_target = TARGET_VAR, supervised_estimator = CONFIG.get("supervised_estimator"),
-                optimize = CONFIG.get("evaluation_metric"), fold = CONFIG.get("k_fold"), custom_grid = CONFIG.get("custom_grid")) 
+    if TARGET_VAR:
+        model = tune_model(model, supervised_target = TARGET_VAR, supervised_estimator = CONFIG.get("supervised_estimator"),
+            optimize = CONFIG.get("evaluation_metric"), fold = CONFIG.get("k_fold"), custom_grid = CONFIG.get("custom_grid")) 
 
-        assigned_df = assign_model(model, score = True)
-                
-        config_yaml = join_path(tmp_dir, "config.yaml")
+    assigned_df = assign_model(model, score = True)
+
+    if USE_MLFLOW:
+        config_yaml = join_path(tmp_dir.name, "config.yaml")
         CONFIG.to_yaml(config_yaml)
         mlflow.log_artifact(config_yaml)
         
         mlflow.sklearn.log_model(model, EXPERIMENT_NAME, registered_model_name = EXPERIMENT_NAME)
-        anomaly_plot = plot_model(model, plot = CONFIG.get("anomaly_plot"), save = tmp_dir, feature = CONFIG.get("label_feature"), label = True)
-        mlflow.log_artifact(join_path(tmp_dir, anomaly_plot))
-    
+        anomaly_plot = plot_model(model, plot = CONFIG.get("anomaly_plot"), save = tmp_dir.name, 
+            feature = CONFIG.get("label_feature"), label = True)
+        mlflow.log_artifact(join_path(tmp_dir.name, anomaly_plot))
+
+        df_path = join_path(tmp_dir.name, f"{EXPERIMENT_NAME}.csv")
+        assigned_df.to_csv(df_path)
+        mlflow.log_artifact(df_path)
+
         mlflow.set_tag("project", PROJECT_NAME)
         mlflow.set_tag("experiment", EXPERIMENT_NAME)
+        mlflow.end_run()
+        tmp_dir.cleanup()
+    else:
+        from joblib import dump
+        dump(model, f"{EXPERIMENT_NAME}.joblib")
+        CONFIG.to_yaml("config.yaml")
+        assigned_df.to_csv(f"{EXPERIMENT_NAME}.csv")
+        anomaly_plot = plot_model(model, plot = CONFIG.get("anomaly_plot"), save = True, 
+            feature = CONFIG.get("label_feature"), label = True)
 
 if __name__ == "__main__":
     main()

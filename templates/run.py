@@ -5,6 +5,7 @@
 # External
 import argparse
 import os, sys
+import tempfile
 
 base_dir = "../.."
 sys.path.insert(0, os.path.abspath(base_dir))
@@ -38,18 +39,35 @@ BASE_DIR = CONFIG.get("base_dir")
 if BASE_DIR is None:
     raise Exception(f"Directory not defined error: {BASE_DIR}")
 
+# Random
+RANDOM_STATE = CONFIG.get("random_seed") 
+
+# Distributed
+RUN_DISTRIBUTED = CONFIG.get("run_distributed")
+
+# MLFlow
+USE_MLFLOW = CONFIG.get("use_mlflow")
+
 ##########################################################################################################
 ### Pipeline
 ##########################################################################################################
 
 def main() -> None:
-    # mlflow.set_tracking_uri(CONFIG.get("MLFLOW_TRACKING_URI")) # Enable tracking using MLFlow
-    # with mlflow.start_run() as run, tempfile.TemporaryDirectory() as tmp_dir:
+    if USE_MLFLOW:
+        import mlflow
+        mlflow.set_tracking_uri(CONFIG.get("MLFLOW_TRACKING_URI")) # Enable tracking using MLFlow
+        mlflow.start_run()
+        tmp_dir = tempfile.TemporaryDirectory()
+
     example = CONFIG.get('example')
     with open("data/example.txt", "w") as f: 
         f.write(f"Example: {example}")
     print(f"Created example.txt" )
 
+    if USE_MLFLOW:
+        mlflow.end_run()
+        tmp_dir.cleanup()
+        
 if __name__ == "__main__":
     main()
      

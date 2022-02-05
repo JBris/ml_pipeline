@@ -186,26 +186,30 @@ class PyCaretClassifier(PyCaretEstimatorBase):
         return pycaret.classification.load_model(model_name)
 
 def setup(estimator: PyCaretEstimatorBase, config: Config, data: pd.DataFrame, experiment_name: str):
+    use_mlflow = config.get("use_mlflow")
+    
     return estimator.setup(data = data, target = config.get("target"), fold_shuffle=True, 
         imputation_type = config.get("imputation_type"), iterative_imputation_iters = config.get("iterative_imputation_iters"),
         fold = config.get("k_fold"), fold_groups = config.get("fold_groups"),
         fold_strategy = config.get("fold_strategy"), use_gpu = True, polynomial_features = config.get("polynomial_features"), 
         polynomial_degree =  config.get("polynomial_degree"), remove_multicollinearity = config.get("remove_multicollinearity"), 
-        log_experiment = True, categorical_features = config.get("categorical_features"), ordinal_features = config.get("ordinal_features"),
+        categorical_features = config.get("categorical_features"), ordinal_features = config.get("ordinal_features"),
         numeric_features = config.get("numeric_features"), feature_selection = config.get("feature_selection"),  
         feature_selection_method = config.get("feature_selection_method"),
         feature_selection_threshold = config.get("feature_selection_threshold"), feature_interaction = config.get("feature_interaction"),
         feature_ratio = config.get("feature_ratio"), interaction_threshold = config.get("interaction_threshold"),
-        experiment_name = experiment_name, ignore_features = config.get("ignore_features"), log_plots = True, 
-        log_profile = True, log_data = True, silent = True, profile = True, session_id = config.get("random_seed")) 
+        log_experiment = use_mlflow, experiment_name = experiment_name, ignore_features = config.get("ignore_features"), 
+        log_plots = use_mlflow,  log_profile = use_mlflow, log_data = use_mlflow, silent = True, profile = use_mlflow, 
+        session_id = config.get("random_seed")) 
 
 def unsupervised_setup(data, config, experiment_name, type: str = "clustering"):
+    use_mlflow = config.get("use_mlflow")
     if type == "anomaly":
         from pycaret.anomaly import setup
     else:
         from pycaret.clustering import setup
     
     return setup(data = data, imputation_type = config.get("imputation_type"),
-        use_gpu = True, remove_multicollinearity = config.get("remove_multicollinearity"), log_experiment = True, 
-        experiment_name = experiment_name, ignore_features = config.get("ignore_features"), log_plots = True, 
-        log_profile = True, log_data = True, silent = True, profile = True, session_id = config.get("random_seed")) 
+        use_gpu = True, remove_multicollinearity = config.get("remove_multicollinearity"), log_experiment = use_mlflow, 
+        experiment_name = experiment_name, ignore_features = config.get("ignore_features"), log_plots = use_mlflow, 
+        log_profile = use_mlflow, log_data = use_mlflow, silent = True, profile = use_mlflow, session_id = config.get("random_seed")) 

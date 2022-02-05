@@ -110,14 +110,17 @@ def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
     scenario = config.get("scenario")
     if scenario is not None:
         config.from_yaml(f"{base_dir}/scenarios/{scenario}.yaml")
+        config.set("scenario", scenario.replace("/", "_"))
 
     local_config = f"{base_dir}/config.local.yaml"
     if os.path.isfile(local_config):
         config.from_yaml(local_config)
     
     if config.get("from_config") != ".":
+        sizing_dir = config.get("base_dir")
         config.from_yaml(config.get("from_config"))
-
+        config.set("base_dir", sizing_dir)
+        
     return config
 
 def add_argument(parser: argparse.ArgumentParser, name: str, default, arg_help: str, 

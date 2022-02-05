@@ -1,3 +1,9 @@
+# Distributed
+run_distributed: false
+
+# MLFlow
+use_mlflow: true
+
 # Random
 random_seed: 100
 

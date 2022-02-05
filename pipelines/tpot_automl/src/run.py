@@ -4,7 +4,6 @@
 
 # External
 import argparse
-import mlflow
 import os, sys
 import tempfile
 
@@ -53,6 +52,12 @@ EST_TASK = CONFIG.get("est_task")
 # Random
 RANDOM_STATE = CONFIG.get("random_seed") 
 
+# Distributed
+RUN_DISTRIBUTED = CONFIG.get("run_distributed")
+
+# MLFlow
+USE_MLFLOW = CONFIG.get("use_mlflow")
+
 ##########################################################################################################
 ### Pipeline
 ##########################################################################################################
@@ -66,38 +71,49 @@ def get_classifier(**kwargs):
     return TPOTClassifier(**kwargs)
 
 def main() -> None:
-    mlflow.set_tracking_uri(CONFIG.get("MLFLOW_TRACKING_URI")) # Enable tracking using MLFlow
-    with mlflow.start_run() as run, tempfile.TemporaryDirectory() as tmp_dir:
+    if USE_MLFLOW:
+        import mlflow
+        mlflow.set_tracking_uri(CONFIG.get("MLFLOW_TRACKING_URI")) # Enable tracking using MLFlow
+        mlflow.start_run()
+        tmp_dir = tempfile.TemporaryDirectory()
 
-        df = DATA.read_csv(FILE_NAME)
-        X = df.drop(TARGET_VAR, axis = 1)
-        y = df[TARGET_VAR].values
+    df = DATA.read_csv(FILE_NAME)
+    X = df.drop(TARGET_VAR, axis = 1)
+    y = df[TARGET_VAR].values
 
-        kwargs = {
-            "generations" : CONFIG.get("generations"), 
-            "population_size" : CONFIG.get("population_size"), 
-            "cv" : CONFIG.get("k_fold"), 
-            "random_state" : RANDOM_STATE, "n_jobs" : -1, 
-            "max_time_mins" : CONFIG.get("max_time_mins"), 
-            "max_eval_time_mins" : CONFIG.get("max_eval_time_mins"), 
-            "use_dask" : False, 
-            "verbosity" : 2, 
-            "warm_start" : False, 
-            "config_dict" : CONFIG.get("config_dict")
-        }
-        if EST_TASK == "regression":
-            pipeline_optimizer = get_regressor(**kwargs)
-        else:
-            pipeline_optimizer = get_classifier(**kwargs)
+    kwargs = {
+        "generations" : CONFIG.get("generations"), 
+        "population_size" : CONFIG.get("population_size"), 
+        "cv" : CONFIG.get("k_fold"), 
+        "random_state" : RANDOM_STATE, 
+        "n_jobs" : -1, 
+        "max_time_mins" : CONFIG.get("max_time_mins"), 
+        "max_eval_time_mins" : CONFIG.get("max_eval_time_mins"), 
+        "use_dask" : CONFIG.get("run_distributed"), 
+        "verbosity" : 2, 
+        "warm_start" : False, 
+        "config_dict" : CONFIG.get("config_dict")
+    }
+    if EST_TASK == "regression":
+        pipeline_optimizer = get_regressor(**kwargs)
+    else:
+        pipeline_optimizer = get_classifier(**kwargs)
 
-        pipeline_optimizer.fit(X, y)
-        pipeline_file = join_path(tmp_dir, f"{EXPERIMENT_NAME}.py")
+    pipeline_optimizer.fit(X, y)
+
+    if USE_MLFLOW:
+        pipeline_file = join_path(tmp_dir.name, f"{EXPERIMENT_NAME}.py")
         pipeline_optimizer.export(pipeline_file)
         mlflow.log_artifact(pipeline_file)
 
-        config_yaml = join_path(tmp_dir, "config.yaml")
+        config_yaml = join_path(tmp_dir.name, "config.yaml")
         CONFIG.to_yaml(config_yaml)
         mlflow.log_artifact(config_yaml)
+        mlflow.end_run()
+        tmp_dir.cleanup()
+    else:
+        pipeline_optimizer.export(f"{EXPERIMENT_NAME}.py")
+        CONFIG.to_yaml("config.yaml")
 
 if __name__ == "__main__":
     main()
