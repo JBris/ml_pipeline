@@ -75,7 +75,7 @@ echo "MLFlow address: ${MLFLOW_TRACKING_URI}"
 echo "Ray address: ${RAY_ADDRESS}"
 
 # Parameter overrides
-[[ ! -z "${CONFIG_FILE}" ]] && add_param from_config "${CONFIG_FILE}"
+[[ ! -z "${CONFIG_FILE}" ]] && add_param from_params "${CONFIG_FILE}"
 [[ ! -z "${SIZING_DIR}" ]] && add_param base_dir "${SIZING_DIR}"
 [[ ! -z "${PIPELINE_SCENARIO}" ]] && add_param scenario "${PIPELINE_SCENARIO}"
 

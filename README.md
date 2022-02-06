@@ -16,7 +16,7 @@ This repository contains a machine learning pipeline framework for running fruit
 
 Execute `init.sh` to initialise the pipeline tool. Several additional options are supported. Run `init.sh -h` for help.
 
-Edit `.env` and `config.local.ini` to specify your local environment configuration as required.
+Edit `.env` and `params.local.ini` to specify your local environment configuration as required.
 
 [Visit the documentation page for more information.](https://planttech.atlassian.net/wiki/spaces/EK3/pages/9994731521/User+manual).
 

@@ -4,7 +4,7 @@
 **/saved
 
 **/*.env
-**/*config.local.yaml
+**/*params.local.yaml
 
 .Rproj.user
 .Rhistory

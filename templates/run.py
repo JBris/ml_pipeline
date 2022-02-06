@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.abspath(base_dir))
 
 # Internal 
 from pipeline_lib.config import add_argument, get_config
+from pipeline_lib.pipelines import end_mlflow, init_mlflow
 
 ##########################################################################################################
 ### Parameters
@@ -24,7 +25,7 @@ parser = argparse.ArgumentParser(
 add_argument(parser, "--example", 0, "An example argument")
 add_argument(parser, "--base_dir", ".", "The base project directory", str)
 add_argument(parser, "--scenario", ".", "The pipeline scenario file", str)
-add_argument(parser, "--from_config", ".", "Override parameters using a config.yaml file", str)
+add_argument(parser, "--from_params", ".", "Override parameters using a params.override.yaml file", str)
 
 ##########################################################################################################
 ### Constants
@@ -55,9 +56,7 @@ USE_MLFLOW = CONFIG.get("use_mlflow")
 def main() -> None:
     if USE_MLFLOW:
         import mlflow
-        mlflow.set_tracking_uri(CONFIG.get("MLFLOW_TRACKING_URI")) # Enable tracking using MLFlow
-        mlflow.start_run()
-        tmp_dir = tempfile.TemporaryDirectory()
+        tmp_dir = init_mlflow(CONFIG)
 
     example = CONFIG.get('example')
     with open("data/example.txt", "w") as f: 
@@ -65,8 +64,7 @@ def main() -> None:
     print(f"Created example.txt" )
 
     if USE_MLFLOW:
-        mlflow.end_run()
-        tmp_dir.cleanup()
+        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
         
 if __name__ == "__main__":
     main()

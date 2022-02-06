@@ -8,16 +8,30 @@ A library of estimators for the machine learning pipeline.
 ### Imports  
 ##########################################################################################################
 
+# External
 import abc
 import pandas as pd
 import pycaret.classification
 import pycaret.regression
 
+from enum import Enum, unique
+from joblib import dump
+
+# Internal
 from pipeline_lib.config import Config
+from pipeline_lib.data import join_path
 
 ##########################################################################################################
 ### Library  
 ##########################################################################################################
+
+@unique
+class EstimatorTask(Enum):
+    """Enum for estimator tasks."""
+    REGRESSION = "regression"
+    CLASSIFICATION = "classification"
+    CLUSTERING = "clustering"
+    ANOMALY_DETECTION = "anomaly"
 
 class PyCaretEstimatorBase(metaclass = abc.ABCMeta):
     """Abstract base class for estimators."""
@@ -203,9 +217,9 @@ def setup(estimator: PyCaretEstimatorBase, config: Config, data: pd.DataFrame, e
         log_plots = use_mlflow,  log_profile = use_mlflow, log_data = use_mlflow, silent = True, profile = use_mlflow, 
         session_id = config.get("random_seed")) 
 
-def unsupervised_setup(data, config, experiment_name, type: str = "clustering"):
+def unsupervised_setup(data, config, experiment_name, type: str = EstimatorTask.CLUSTERING.value):
     use_mlflow = config.get("use_mlflow")
-    if type == "anomaly":
+    if type == EstimatorTask.ANOMALY_DETECTION.value:
         from pycaret.anomaly import setup
     else:
         from pycaret.clustering import setup
@@ -215,3 +229,9 @@ def unsupervised_setup(data, config, experiment_name, type: str = "clustering"):
         pca = config.get("pca"), pca_method = config.get("pca_method"), pca_components = config.get("pca_components"),
         experiment_name = experiment_name, ignore_features = config.get("ignore_features"), log_plots = use_mlflow, 
         log_profile = use_mlflow, log_data = use_mlflow, silent = True, profile = use_mlflow, session_id = config.get("random_seed")) 
+
+def save_local_model(model, experiment_name: str, path = "data") -> str:
+    """Save the model to a local directory."""
+    model_path = join_path(path, f"{experiment_name}.joblib")
+    dump(model, model_path) 
+    return model_path

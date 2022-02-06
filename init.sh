@@ -35,9 +35,9 @@ create_file () {
 
 help "${1}"
 
-if [ ! -f config.local.yaml ]; then 
-    touch config.local.yaml
-    echo "Created config.local.yaml"
+if [ ! -f params.local.yaml ]; then 
+    touch params.local.yaml
+    echo "Created params.local.yaml"
 fi
 
 create_file .env  .env.example

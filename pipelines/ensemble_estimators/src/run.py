@@ -16,7 +16,8 @@ sys.path.insert(0, os.path.abspath(base_dir))
 # Internal 
 from pipeline_lib.config import add_argument, get_config
 from pipeline_lib.data import Data, join_path
-from pipeline_lib.estimator import PyCaretClassifier, PyCaretRegressor, setup
+from pipeline_lib.estimator import EstimatorTask, PyCaretClassifier, PyCaretRegressor, setup
+from pipeline_lib.pipelines import end_mlflow, init_mlflow, PlotParameters, save_local_results, save_mlflow_results
 
 ##########################################################################################################
 ### Parameters
@@ -28,7 +29,7 @@ parser = argparse.ArgumentParser(
     
 add_argument(parser, "--base_dir", ".", "The base project directory", str)
 add_argument(parser, "--scenario", ".", "The pipeline scenario file", str)
-add_argument(parser, "--from_config", ".", "Override parameters using a config.yaml file", str)
+add_argument(parser, "--from_params", ".", "Override parameters using a params.override.yaml file", str)
 
 ##########################################################################################################
 ### Constants
@@ -50,7 +51,7 @@ TARGET_VAR = CONFIG.get("target")
 
 # Estimator
 EST_TASK = CONFIG.get("est_task")
-if EST_TASK == "regression":
+if EST_TASK == EstimatorTask.REGRESSION.value:
     ESTIMATOR = PyCaretRegressor()
 else:
     ESTIMATOR = PyCaretClassifier()
@@ -81,8 +82,7 @@ USE_MLFLOW = CONFIG.get("use_mlflow")
 ##########################################################################################################
 
 def main() -> None:
-    if RUN_DISTRIBUTED:
-        import ray
+    # if RUN_DISTRIBUTED:
         # ray.init(address=os.environ["ip_head"])
         # print("Nodes in the Ray cluster:")
         # print(ray.nodes())
@@ -96,9 +96,7 @@ def main() -> None:
 
     if USE_MLFLOW:
         import mlflow
-        mlflow.set_tracking_uri(CONFIG.get("MLFLOW_TRACKING_URI")) # Enable tracking using MLFlow
-        mlflow.start_run()
-        tmp_dir = tempfile.TemporaryDirectory()
+        tmp_dir = init_mlflow(CONFIG)
 
     # Data split
     df = DATA.read_csv(FILE_NAME)
@@ -146,7 +144,10 @@ def main() -> None:
     final_preds, final_mae, final_mse = _predict_model(final_ensemble, data_unseen)
 
     # Save results
+    plot_params = PlotParameters(ESTIMATOR.plot_model, plots = ["residuals", "error"], model = best_model)
     if USE_MLFLOW:
+        save_mlflow_results(CONFIG, final_ensemble, EXPERIMENT_NAME, tmp_dir, plot_params = plot_params)
+
         def _save_metrics(mae, mse, preds, prefix):
             mlflow.log_metric(f"{prefix}_mae", mae)
             mlflow.log_metric(f"{prefix}_mse", mse)
@@ -158,24 +159,9 @@ def main() -> None:
         _save_metrics(testing_mae, testing_mse, testing_preds, "testing")
         _save_metrics(final_mae, final_mse, final_preds, "final")
 
-        config_yaml = join_path(tmp_dir.name, "config.yaml")
-        CONFIG.to_yaml(config_yaml)
-        mlflow.log_artifact(config_yaml)
-    
-        mlflow.sklearn.log_model(final_ensemble, EXPERIMENT_NAME, registered_model_name = EXPERIMENT_NAME)
-
-        for plot in ["residuals", "error"]:
-            ensemble_model_plot = ESTIMATOR.plot_model(best_model, plot = plot, save = tmp_dir.name)
-            mlflow.log_artifact(join_path(tmp_dir.name, ensemble_model_plot))
-
-        mlflow.set_tag("project", PROJECT_NAME)
-        mlflow.set_tag("experiment", EXPERIMENT_NAME)
-        mlflow.end_run()
-        tmp_dir.cleanup()
+        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
     else:
-        from joblib import dump
-        dump(final_ensemble, join_path("data", f"{EXPERIMENT_NAME}.joblib")) 
-        CONFIG.to_yaml(join_path("data", "config.yaml"))
+        save_local_results(CONFIG, final_ensemble, EXPERIMENT_NAME, plot_params = plot_params)
 
         pd.DataFrame({
             "training_mae": training_mae,
@@ -186,9 +172,6 @@ def main() -> None:
             "final_mse": final_mse
         }, index = [0]).to_csv(join_path("data", f"{EXPERIMENT_NAME}_metrics.csv")) 
         
-        for plot in ["residuals", "error"]:
-            ESTIMATOR.plot_model(best_model, plot = plot, save = "data")
-
 if __name__ == "__main__":
     main()
      

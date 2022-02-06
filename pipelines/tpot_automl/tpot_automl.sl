@@ -16,9 +16,9 @@ conda activate /nesi/project/ptec03219/tpot_dask
 . ../../.env
 
 # Vars
-# Override using sbatch --export=base_dir=.,scenario=.,...,from_config=. tpot_automl.sl
+# Override using sbatch --export=base_dir=.,scenario=.,...,from_params=. tpot_automl.sl
 base_dir="${SIZING_DIR:-.}"
 scenario="${PIPELINE_SCENARIO:-.}"
-from_config="${CONFIG_FILE:-.}"
+from_params="${CONFIG_FILE:-.}"
 
-srun python src/run.py --base_dir "${base_dir}" --scenario "${scenario}" --from_config "${from_config}"
+srun python src/run.py --base_dir "${base_dir}" --scenario "${scenario}" --from_params "${from_params}"
