@@ -26,6 +26,8 @@ categorical_features: null
 ordinal_features: null
 numeric_features: null
 group_features: null
+high_cardinality_features: null
+date_features: null
 
 # Preprocessing
 pca: false
@@ -37,6 +39,12 @@ normalize: false
 normalize_method: zscore
 transformation: false
 transformation_method: yeo-johnson
+remove_outliers: false
+outliers_threshold: 0.05
+combine_rare_levels: false
+rare_level_threshold: 0.1
+create_clusters: false
+cluster_iter: 20
 
 # Training
 search_algorithm: random

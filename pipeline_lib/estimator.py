@@ -253,7 +253,8 @@ def _get_setup_kwargs(config: Config, data: pd.DataFrame, experiment_name: str) 
     config_args = ["imputation_type", "iterative_imputation_iters", "use_gpu", "remove_multicollinearity", 
         "multicollinearity_threshold", "pca", "pca_method", "pca_components", "ignore_features", "normalize", 
         "normalize_method", "transformation", "transformation_method", "group_features", "categorical_features", 
-        "ordinal_features", "numeric_features"]
+        "ordinal_features", "numeric_features", "high_cardinality_features", "date_features", "combine_rare_levels",
+        "rare_level_threshold"]
     for config_arg in config_args:
         kwargs[config_arg] = config.get(config_arg)
 
@@ -265,12 +266,13 @@ def setup(estimator: PyCaretEstimatorBase, config: Config, data: pd.DataFrame, e
     
     config_args = ["target", "fold", "fold_groups", "fold_strategy", "polynomial_features", "polynomial_degree", 
         "feature_selection", "feature_selection_method", "feature_selection_threshold", "feature_interaction", 
-        "feature_ratio", "interaction_threshold"]
+        "feature_ratio", "interaction_threshold", "remove_outliers", "outliers_threshold", "create_clusters",
+        "cluster_iter"]
     for config_arg in config_args:
         kwargs[config_arg] = config.get(config_arg)
 
     return estimator.setup(**kwargs) 
-
+    
 def unsupervised_setup(config: Config, data: pd.DataFrame, experiment_name: str, type: str = EstimatorTask.CLUSTERING.value):
     if type == EstimatorTask.ANOMALY_DETECTION.value:
         from pycaret.anomaly import setup
