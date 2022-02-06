@@ -86,7 +86,7 @@ def main() -> None:
     kwargs = {
         "generations" : CONFIG.get("generations"), 
         "population_size" : CONFIG.get("population_size"), 
-        "cv" : CONFIG.get("k_fold"), 
+        "cv" : CONFIG.get("fold"), 
         "random_state" : RANDOM_STATE, 
         "n_jobs" : -1, 
         "max_time_mins" : CONFIG.get("max_time_mins"), 

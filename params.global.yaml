@@ -11,7 +11,7 @@ random_seed: 100
 target: null
 training_frac: 0.8
 fold_strategy: kfold
-k_fold: 5
+fold: 5
 fold_groups: null
 ignore_features: null
 polynomial_features: false
@@ -46,6 +46,7 @@ n_estimators: 10
 n_iter: 10
 turbo: true
 supervised_estimator: lr
+use_gpu: true
 
 # Evaluation
 evaluation_metric: MSE

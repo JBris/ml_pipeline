@@ -199,36 +199,46 @@ class PyCaretClassifier(PyCaretEstimatorBase):
     def load_model(self, model_name: str):
         return pycaret.classification.load_model(model_name)
 
-def setup(estimator: PyCaretEstimatorBase, config: Config, data: pd.DataFrame, experiment_name: str):
+def _get_setup_kwargs(config: Config, data: pd.DataFrame, experiment_name: str) -> dict:
     use_mlflow = config.get("use_mlflow")
-    
-    return estimator.setup(data = data, target = config.get("target"), fold_shuffle=True, 
-        imputation_type = config.get("imputation_type"), iterative_imputation_iters = config.get("iterative_imputation_iters"),
-        fold = config.get("k_fold"), fold_groups = config.get("fold_groups"),
-        fold_strategy = config.get("fold_strategy"), use_gpu = True, polynomial_features = config.get("polynomial_features"), 
-        polynomial_degree =  config.get("polynomial_degree"), remove_multicollinearity = config.get("remove_multicollinearity"), 
-        categorical_features = config.get("categorical_features"), ordinal_features = config.get("ordinal_features"),
-        numeric_features = config.get("numeric_features"), feature_selection = config.get("feature_selection"),  
-        feature_selection_method = config.get("feature_selection_method"),
-        feature_selection_threshold = config.get("feature_selection_threshold"), feature_interaction = config.get("feature_interaction"),
-        feature_ratio = config.get("feature_ratio"), interaction_threshold = config.get("interaction_threshold"),
-        pca = config.get("pca"), pca_method = config.get("pca_method"), pca_components = config.get("pca_components"),
-        log_experiment = use_mlflow, experiment_name = experiment_name, ignore_features = config.get("ignore_features"), 
-        log_plots = use_mlflow,  log_profile = use_mlflow, log_data = use_mlflow, silent = True, profile = use_mlflow, 
-        session_id = config.get("random_seed")) 
+    kwargs = { 
+        "data": data,
+        "experiment_name": experiment_name, 
+        "log_experiment": use_mlflow,
+        "log_plots": use_mlflow,
+        "log_profile": use_mlflow,
+        "log_data": use_mlflow,
+        "profile": use_mlflow,
+        "silent": True,
+        "session_id": config.get("random_seed")
+    }
+    return kwargs
 
-def unsupervised_setup(data, config, experiment_name, type: str = EstimatorTask.CLUSTERING.value):
-    use_mlflow = config.get("use_mlflow")
+def setup(estimator: PyCaretEstimatorBase, config: Config, data: pd.DataFrame, experiment_name: str):
+    kwargs = _get_setup_kwargs(config, data, experiment_name)
+    kwargs["fold_shuffle"] = True
+
+    for config_arg in ["target", "imputation_type", "iterative_imputation_iters", "fold", "fold_groups",
+        "fold_strategy", "use_gpu", "polynomial_features", "polynomial_degree", "remove_multicollinearity", 
+        "categorical_features", "ordinal_features", "numeric_features", "feature_selection", "feature_selection_method",
+        "feature_selection_threshold", "feature_interaction", "feature_ratio", "interaction_threshold", "pca",
+        "pca_method", "pca_components", "ignore_features"]:
+        kwargs[config_arg] = config.get(config_arg)
+
+    return estimator.setup(**kwargs) 
+
+def unsupervised_setup(config: Config, data: pd.DataFrame, experiment_name: str, type: str = EstimatorTask.CLUSTERING.value):
     if type == EstimatorTask.ANOMALY_DETECTION.value:
         from pycaret.anomaly import setup
     else:
         from pycaret.clustering import setup
     
-    return setup(data = data, imputation_type = config.get("imputation_type"),
-        use_gpu = True, remove_multicollinearity = config.get("remove_multicollinearity"), log_experiment = use_mlflow, 
-        pca = config.get("pca"), pca_method = config.get("pca_method"), pca_components = config.get("pca_components"),
-        experiment_name = experiment_name, ignore_features = config.get("ignore_features"), log_plots = use_mlflow, 
-        log_profile = use_mlflow, log_data = use_mlflow, silent = True, profile = use_mlflow, session_id = config.get("random_seed")) 
+    kwargs = _get_setup_kwargs(config, data, experiment_name)
+    for config_arg in ["imputation_type", "use_gpu", "remove_multicollinearity", "pca", "pca_method",
+        "pca_components", "ignore_features"]:
+        kwargs[config_arg] = config.get(config_arg)
+
+    return setup(**kwargs) 
 
 def save_local_model(model, experiment_name: str, path = "data") -> str:
     """Save the model to a local directory."""

@@ -71,13 +71,13 @@ def main() -> None:
     # Data split
     df = DATA.read_csv(FILE_NAME)
     # Data preprocessing
-    est_setup = unsupervised_setup(df, CONFIG, EXPERIMENT_NAME, EstimatorTask.CLUSTERING.value)
+    est_setup = unsupervised_setup(CONFIG, df, EXPERIMENT_NAME, EstimatorTask.CLUSTERING.value)
     # Estimator fitting
     model = create_model(MODEL, num_clusters = CONFIG.get("num_clusters"), ground_truth = CONFIG.get("ground_truth"))
     # Tune model
     if TARGET_VAR:
         model = tune_model(model, supervised_target = TARGET_VAR, supervised_estimator = CONFIG.get("supervised_estimator"),
-            optimize = CONFIG.get("evaluation_metric"), fold = CONFIG.get("k_fold"), custom_grid = CONFIG.get("custom_grid")) 
+            optimize = CONFIG.get("evaluation_metric"), fold = CONFIG.get("fold"), custom_grid = CONFIG.get("custom_grid")) 
     # Assign clusters
     assigned_df = assign_model(model)
 
