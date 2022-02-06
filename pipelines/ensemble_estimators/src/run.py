@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.abspath(base_dir))
 # Internal 
 from pipeline_lib.config import Config, add_argument, get_config
 from pipeline_lib.data import Data, join_path
-from pipeline_lib.estimator import EstimatorTask, PyCaretClassifier, PyCaretRegressor, setup
+from pipeline_lib.estimator import EstimatorTask, PyCaretClassifier, PyCaretRegressor, setup, train_ensemble_estimators
 from pipeline_lib.pipelines import end_mlflow, init_mlflow, PlotParameters, save_local_results, save_mlflow_results
 
 ##########################################################################################################
@@ -115,7 +115,7 @@ def main() -> None:
     est_setup = setup(ESTIMATOR, CONFIG, data, EXPERIMENT_NAME)
 
     # Estimator fitting
-    best_model, final_ensemble = train_ensemble_estimators()
+    best_model, final_ensemble = train_ensemble_estimators(ESTIMATOR, CONFIG, SEARCH_ALGORITHM, SEARCH_LIBRARY)
 
     # Evaluate model
     training_preds, training_mae, training_mse = _predict_reg_model(best_model)

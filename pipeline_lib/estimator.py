@@ -208,6 +208,7 @@ def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, s
     n_estimators = config.get("n_estimators")
     n_iter = config.get("n_iter")
 
+    # Train and tune estimators
     top_models = estimator.compare_models(n_select = config.get("n_select"), sort = evaluation_metric, turbo = config.get("turbo"))
     tuned_top = [ 
         estimator.tune_model(model, search_algorithm = search_algorithm, optimize = evaluation_metric,
@@ -231,6 +232,8 @@ def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, s
         for model in top_models 
     ]
     boosted_blending_ensemble = estimator.blend_models(boosted_top, optimize = evaluation_metric, choose_better = True)
+
+    # Use AutoML to select best model in session
     best_model = estimator.automl(optimize = evaluation_metric)        
     final_ensemble = estimator.finalize_model(best_model)
     return best_model, final_ensemble
