@@ -26,3 +26,4 @@ Thumbs.db
 **/AutoML_*
 **/*.db
 **/catboost_info
+**/slurm-*.out
