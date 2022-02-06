@@ -6,7 +6,6 @@
 import argparse
 import os, sys
 import pandas as pd
-import tempfile
 
 from pycaret.utils import check_metric
 
@@ -91,17 +90,9 @@ def _save_reg_metrics(log_metric, mae, mse, preds, prefix):
         log_metric(key = f"{prefix}_prediction", value = predictions, step = i)
 
 def main() -> None:
-    # if RUN_DISTRIBUTED:
-        # ray.init(address=os.environ["ip_head"])
-        # print("Nodes in the Ray cluster:")
-        # print(ray.nodes())
-        # with mlflow.start_run() as run, tempfile.TemporaryDirectory() as tmp_dir:
-        #     client = mlflow.tracking.MlflowClient()
-
-        # ray.init(
-        #     CONFIG.get("RAY_ADDRESS"),
-        #             object_store_memory=200 * 1024 * 1024,
-        # )
+    if RUN_DISTRIBUTED:
+        import ray
+        ray.init(address = CONFIG.get("RAY_IP_HEAD")) # object_store_memory=200 * 1024 * 1024
 
     if USE_MLFLOW:
         import mlflow
@@ -143,6 +134,9 @@ def main() -> None:
             "final_mae": final_mae,
             "final_mse": final_mse
         }, index = [0]).to_csv(join_path("data", f"{EXPERIMENT_NAME}_metrics.csv")) 
+
+    if RUN_DISTRIBUTED:
+        ray.shutdown()
         
 if __name__ == "__main__":
     main()

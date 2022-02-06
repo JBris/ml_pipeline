@@ -1,31 +1,66 @@
-#!/bin/bash -e
-##SBATCH --account=<id>
-#SBATCH --job-name=distributed_ensemble_estimators  # job name (shows up in the queue)
-#SBATCH --time=00:02:00      # Walltime (HH:MM:SS)
-#SBATCH --ntasks=3
-#SBATCH --cpus-per-task=5
-#SBATCH --mem-per-cpu=512M
-#SBATCH --hint=multithread
-##SBATCH --hint=nomultithread # disable hyperthreading that is activated by default
-#SBATCH --tasks-per-node=1
+#!/bin/bash
+# shellcheck disable=SC2206
+#SBATCH --account=ptec03219
+#SBATCH --job-name=ray_ensemble_estimators
+#SBATCH --cpus-per-task=4
+#SBATCH --mem-per-cpu=1GB
 #SBATCH --nodes=4
-##SBATCH --reservation=test
+#SBATCH --tasks-per-node=1
+#SBATCH --time=23:59:59
+#SBATCH --hint=multithread
+ 
+set -x
 
-let "worker_num=(${SLURM_NTASKS} - 1)"
-total_cores=$((${worker_num} * ${SLURM_CPUS_PER_TASK}))
-#total_cores=10
-echo "Total cores: ${total_cores}"
+# Getting the node names
+nodes=$(scontrol show hostnames "$SLURM_JOB_NODELIST")
+nodes_array=($nodes)
 
-suffix='6379'
-ip_head=`hostname`:$suffix
-export ip_head  
+head_node=${nodes_array[0]}
+head_node_ip=$(srun --nodes=1 --ntasks=1 -w "$head_node" hostname --ip-address)
 
-# Let's say the hostname=cluster-node-500 To view the dashboard on localhost:8265, set up an ssh-tunnel like this: (assuming the firewall allows it)
-# $  ssh -N -f -L 8265:cluster-node-500:8265 user@big-cluster
-srun --nodes=1 --ntasks=1 --cpus-per-task=${SLURM_CPUS_PER_TASK} --nodelist=`hostname` ray start --head --block --dashboard-host 0.0.0.0 --port=6379 --num-cpus ${SLURM_CPUS_PER_TASK} &
-sleep 5
+# if we detect a space character in the head node IP, we'll
+# convert it to an ipv4 address. This step is optional.
+if [[ "$head_node_ip" == *" "* ]]; then
+IFS=' ' read -ra ADDR <<<"$head_node_ip"
+if [[ ${#ADDR[0]} -gt 16 ]]; then
+  head_node_ip=${ADDR[1]}
+else
+  head_node_ip=${ADDR[0]}
+fi
+echo "IPV6 address detected. We split the IPV4 address as $head_node_ip"
+fi
 
-srun --nodes=${worker_num} --ntasks=${worker_num} --cpus-per-task=${SLURM_CPUS_PER_TASK} --exclude=`hostname` ray start --address $ip_head --block --num-cpus ${SLURM_CPUS_PER_TASK} &
-sleep 5
+port=6379
+RAY_IP_HEAD=${head_node_ip}:${port}
+export RAY_IP_HEAD
+echo "IP Head: $RAY_IP_HEAD"
 
-python -u src/run.py ${total_cores} # Pass the total number of allocated CPUs
+echo "Starting HEAD at $head_node"
+srun --nodes=1 --ntasks=1 -w "$head_node" \
+    ray start --head --node-ip-address="$head_node_ip" --port=$port \
+    --num-cpus "${SLURM_CPUS_PER_TASK}" --block & # --num-gpus "${SLURM_GPUS_PER_TASK}"
+
+# optional, though may be useful in certain versions of Ray < 1.0.
+sleep 10
+
+# number of nodes other than the head node
+worker_num=$((SLURM_JOB_NUM_NODES - 1))
+
+for ((i = 1; i <= worker_num; i++)); do
+    node_i=${nodes_array[$i]}
+    echo "Starting WORKER $i at $node_i"
+    srun --nodes=1 --ntasks=1 -w "$node_i" \
+        ray start --address "$RAY_IP_HEAD" \
+        --num-cpus "${SLURM_CPUS_PER_TASK}" --block & 
+    sleep 5
+done
+ 
+. ../../.env
+
+# Vars
+# Override using sbatch --export=base_dir=.,scenario=.,...,from_params=. tpot_automl.sl
+base_dir="${SIZING_DIR:-.}"
+scenario="${PIPELINE_SCENARIO:-.}"
+from_params="${CONFIG_FILE:-.}"
+
+python src/run.py --base_dir "${base_dir}" --scenario "${scenario}" --from_params "${from_params}"
