@@ -13,6 +13,8 @@ import abc
 import pandas as pd
 import pycaret.classification
 import pycaret.regression
+import sklearn
+from typing import Tuple
 
 from enum import Enum, unique
 from joblib import dump
@@ -199,7 +201,42 @@ class PyCaretClassifier(PyCaretEstimatorBase):
     def load_model(self, model_name: str):
         return pycaret.classification.load_model(model_name)
 
+def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, search_algorithm: str, 
+    search_library: str) -> Tuple[sklearn.base.BaseEstimator]:    
+    """Train several ensemble models, and return the best performing one."""
+    evaluation_metric = config.get("evaluation_metric")
+    n_estimators = config.get("n_estimators")
+    n_iter = config.get("n_iter")
+
+    top_models = estimator.compare_models(n_select = config.get("n_select"), sort = evaluation_metric, turbo = config.get("turbo"))
+    tuned_top = [ 
+        estimator.tune_model(model, search_algorithm = search_algorithm, optimize = evaluation_metric,
+            search_library = search_library, n_iter = n_iter, custom_grid = config.get("custom_grid")) 
+        for model in top_models 
+    ]
+
+    # Train ensemble estimators
+    meta_model = estimator.create_model(config.get("meta_model"))
+    tuned_meta_model = estimator.tune_model(meta_model, search_algorithm = search_algorithm, 
+        optimize = evaluation_metric, search_library = search_library, n_iter = n_iter, custom_grid = config.get("custom_grid"))  
+    stacking_ensemble = estimator.stack_models(tuned_top, optimize = evaluation_metric, meta_model = tuned_meta_model)
+    blending_ensemble = estimator.blend_models(tuned_top, optimize = evaluation_metric, choose_better = True)
+    boosting_ensemble = estimator.ensemble_model(tuned_top[0], method = "Boosting", optimize = evaluation_metric, 
+        choose_better = True, n_estimators = n_estimators)
+    bagging_ensemble = estimator.ensemble_model(tuned_top[0], method = "Bagging", optimize = evaluation_metric, 
+        choose_better = True, n_estimators = n_estimators)
+    boosted_top = [ 
+        estimator.ensemble_model(model, method = "Boosting", optimize = evaluation_metric, 
+            choose_better = True, n_estimators = n_estimators)
+        for model in top_models 
+    ]
+    boosted_blending_ensemble = estimator.blend_models(boosted_top, optimize = evaluation_metric, choose_better = True)
+    best_model = estimator.automl(optimize = evaluation_metric)        
+    final_ensemble = estimator.finalize_model(best_model)
+    return best_model, final_ensemble
+
 def _get_setup_kwargs(config: Config, data: pd.DataFrame, experiment_name: str) -> dict:
+    """Get PyCaret model setup arguments from the experiment configuration."""
     use_mlflow = config.get("use_mlflow")
     kwargs = { 
         "data": data,
@@ -212,17 +249,24 @@ def _get_setup_kwargs(config: Config, data: pd.DataFrame, experiment_name: str) 
         "silent": True,
         "session_id": config.get("random_seed")
     }
+
+    config_args = ["imputation_type", "iterative_imputation_iters", "use_gpu", "remove_multicollinearity", 
+        "multicollinearity_threshold", "pca", "pca_method", "pca_components", "ignore_features", "normalize", 
+        "normalize_method", "transformation", "transformation_method", "group_features", "categorical_features", 
+        "ordinal_features", "numeric_features"]
+    for config_arg in config_args:
+        kwargs[config_arg] = config.get(config_arg)
+
     return kwargs
 
 def setup(estimator: PyCaretEstimatorBase, config: Config, data: pd.DataFrame, experiment_name: str):
     kwargs = _get_setup_kwargs(config, data, experiment_name)
     kwargs["fold_shuffle"] = True
-
-    for config_arg in ["target", "imputation_type", "iterative_imputation_iters", "fold", "fold_groups",
-        "fold_strategy", "use_gpu", "polynomial_features", "polynomial_degree", "remove_multicollinearity", 
-        "categorical_features", "ordinal_features", "numeric_features", "feature_selection", "feature_selection_method",
-        "feature_selection_threshold", "feature_interaction", "feature_ratio", "interaction_threshold", "pca",
-        "pca_method", "pca_components", "ignore_features"]:
+    
+    config_args = ["target", "fold", "fold_groups", "fold_strategy", "polynomial_features", "polynomial_degree", 
+        "feature_selection", "feature_selection_method", "feature_selection_threshold", "feature_interaction", 
+        "feature_ratio", "interaction_threshold"]
+    for config_arg in config_args:
         kwargs[config_arg] = config.get(config_arg)
 
     return estimator.setup(**kwargs) 
@@ -232,12 +276,8 @@ def unsupervised_setup(config: Config, data: pd.DataFrame, experiment_name: str,
         from pycaret.anomaly import setup
     else:
         from pycaret.clustering import setup
-    
-    kwargs = _get_setup_kwargs(config, data, experiment_name)
-    for config_arg in ["imputation_type", "use_gpu", "remove_multicollinearity", "pca", "pca_method",
-        "pca_components", "ignore_features"]:
-        kwargs[config_arg] = config.get(config_arg)
 
+    kwargs = _get_setup_kwargs(config, data, experiment_name)
     return setup(**kwargs) 
 
 def save_local_model(model, experiment_name: str, path = "data") -> str:

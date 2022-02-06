@@ -25,12 +25,18 @@ interaction_threshold: 0.01
 categorical_features: null
 ordinal_features: null
 numeric_features: null
+group_features: null
 
 # Preprocessing
 pca: false
 pca_method: linear # kernel, incremental
 pca_components: null
 remove_multicollinearity: false
+multicollinearity_threshold: 0.9
+normalize: false
+normalize_method: zscore
+transformation: false
+transformation_method: yeo-johnson
 
 # Training
 search_algorithm: random
@@ -51,4 +57,3 @@ use_gpu: true
 # Evaluation
 evaluation_metric: MSE
   
-
