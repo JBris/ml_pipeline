@@ -77,6 +77,13 @@ def main() -> None:
         mlflow.start_run()
         tmp_dir = tempfile.TemporaryDirectory()
 
+    if RUN_DISTRIBUTED:
+        import dask.distributed as dd
+        import dask_mpi as dm
+        # Initialise Dask cluster and store worker files in current work directory
+        dm.initialize(local_directory=os.getcwd())
+        client = dd.Client()
+
     df = DATA.read_csv(FILE_NAME)
     X = df.drop(TARGET_VAR, axis = 1)
     y = df[TARGET_VAR].values
@@ -89,7 +96,7 @@ def main() -> None:
         "n_jobs" : -1, 
         "max_time_mins" : CONFIG.get("max_time_mins"), 
         "max_eval_time_mins" : CONFIG.get("max_eval_time_mins"), 
-        "use_dask" : CONFIG.get("run_distributed"), 
+        "use_dask" : RUN_DISTRIBUTED, 
         "verbosity" : 2, 
         "warm_start" : False, 
         "config_dict" : CONFIG.get("config_dict")
@@ -100,6 +107,12 @@ def main() -> None:
         pipeline_optimizer = get_classifier(**kwargs)
 
     pipeline_optimizer.fit(X, y)
+    # if RUN_DISTRIBUTED:
+    #     import joblib
+    #     with joblib.parallel_backend("dask"):
+    #         pipeline_optimizer.fit(X, y)
+    # else:
+    #     pipeline_optimizer.fit(X, y)
 
     if USE_MLFLOW:
         pipeline_file = join_path(tmp_dir.name, f"{EXPERIMENT_NAME}.py")
@@ -114,6 +127,9 @@ def main() -> None:
     else:
         pipeline_optimizer.export(join_path("data", f"{EXPERIMENT_NAME}.py"))
         CONFIG.to_yaml(join_path("data", "config.yaml"))
+
+    if RUN_DISTRIBUTED:
+        client.close()
 
 if __name__ == "__main__":
     main()
