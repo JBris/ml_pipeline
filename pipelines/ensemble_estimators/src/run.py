@@ -7,6 +7,9 @@ import argparse
 import os, sys
 import pandas as pd
 
+if "DISABLE_PLOTLY" in os.environ:
+    sys.modules['plotly.express'] = {}
+
 from pycaret.utils import check_metric
 
 base_dir = "../.."
@@ -92,7 +95,7 @@ def _save_reg_metrics(log_metric, mae, mse, preds, prefix):
 def main() -> None:
     if RUN_DISTRIBUTED:
         import ray
-        ray.init(address = CONFIG.get("RAY_IP_HEAD")) # object_store_memory=200 * 1024 * 1024
+        ray.init(address = CONFIG.get("RAY_ADDRESS"))  
 
     if USE_MLFLOW:
         import mlflow

@@ -2,13 +2,13 @@
 # shellcheck disable=SC2206
 #SBATCH --account=ptec03219
 #SBATCH --job-name=ray_ensemble_estimators
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=1GB
 #SBATCH --nodes=4
-#SBATCH --tasks-per-node=1
+#SBATCH --tasks-per-node=4
 #SBATCH --time=23:59:59
 #SBATCH --hint=multithread
- 
+
 set -x
 
 # Getting the node names
@@ -30,6 +30,9 @@ fi
 echo "IPV6 address detected. We split the IPV4 address as $head_node_ip"
 fi
 
+# Module load
+module load  Python/3.9.9-gimkl-2020a
+
 port=6379
 RAY_IP_HEAD=${head_node_ip}:${port}
 export RAY_IP_HEAD
@@ -47,15 +50,17 @@ sleep 10
 worker_num=$((SLURM_JOB_NUM_NODES - 1))
 
 for ((i = 1; i <= worker_num; i++)); do
-    node_i=${nodes_array[$i]}
-    echo "Starting WORKER $i at $node_i"
-    srun --nodes=1 --ntasks=1 -w "$node_i" \
-        ray start --address "$RAY_IP_HEAD" \
-        --num-cpus "${SLURM_CPUS_PER_TASK}" --block & 
-    sleep 5
+   node_i=${nodes_array[$i]}
+   echo "Starting WORKER $i at $node_i"
+   srun --nodes=1 --ntasks=1 -w "$node_i" \
+       ray start --address "$RAY_IP_HEAD" \
+       --num-cpus "${SLURM_CPUS_PER_TASK}" --block &
+   sleep 5
 done
- 
+
 . ../../.env
+export RAY_ADDRESS=$RAY_IP_HEAD
+export DISABLE_PLOTLY=1
 
 # Vars
 # Override using sbatch --export=base_dir=.,scenario=.,...,from_params=. tpot_automl.sl
@@ -63,4 +68,4 @@ base_dir="${SIZING_DIR:-.}"
 scenario="${PIPELINE_SCENARIO:-.}"
 from_params="${CONFIG_FILE:-.}"
 
-python src/run.py --base_dir "${base_dir}" --scenario "${scenario}" --from_params "${from_params}"
+python -u src/run.py --base_dir "${base_dir}" --scenario "${scenario}" --from_params "${from_params}"

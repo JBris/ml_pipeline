@@ -6,7 +6,6 @@
 #SBATCH --ntasks=4
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=512M
-#SBATCH --hint=multithread
 
 # Activate conda environment
 module load Anaconda3/2019.03-gimkl-2018b

@@ -84,20 +84,14 @@ def main() -> None:
     y = df[TARGET_VAR].values
 
     kwargs = {
-        "generations" : CONFIG.get("generations"), 
-        "population_size" : CONFIG.get("population_size"), 
-        "cv" : CONFIG.get("fold"), 
-        "random_state" : RANDOM_STATE, 
-        "n_jobs" : -1, 
-        "max_time_mins" : CONFIG.get("max_time_mins"), 
-        "max_eval_time_mins" : CONFIG.get("max_eval_time_mins"), 
-        "use_dask" : RUN_DISTRIBUTED, 
-        "verbosity" : 2, 
-        "warm_start" : False, 
-        "config_dict" : CONFIG.get("config_dict"),
-        "early_stop": CONFIG.get("early_stop"),
-        "periodic_checkpoint_folder": "data"
+        "cv" : CONFIG.get("fold"), "random_state" : RANDOM_STATE, "use_dask" : RUN_DISTRIBUTED, 
+        "verbosity" : 2, "warm_start" : False, "periodic_checkpoint_folder": "data"
     }
+
+    for config_arg in ["generations", "population_size", "n_jobs", "max_time_mins", "max_eval_time_mins",
+        "config_dict", "early_stop"]:
+        kwargs[config_arg] = CONFIG.get(config_arg)
+
     if EST_TASK == EstimatorTask.REGRESSION.value:
         est = TPOTRegressor(**kwargs)
     else:
@@ -106,7 +100,7 @@ def main() -> None:
     est.fit(X, y)
     # if RUN_DISTRIBUTED:
     #     import joblib
-    #     with joblib.parallel_backend("dask"): # @TODO Run using ray backend instead?
+    #     with joblib.parallel_backend("dask"): # @TODO Run using Ray backend instead?
     #         pipeline_optimizer.fit(X, y)
     # else:
     #     pipeline_optimizer.fit(X, y)

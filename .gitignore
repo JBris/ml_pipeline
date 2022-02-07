@@ -27,3 +27,4 @@ Thumbs.db
 **/*.db
 **/catboost_info
 **/slurm-*.out
+**/core.*

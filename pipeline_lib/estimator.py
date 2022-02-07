@@ -257,7 +257,7 @@ def _get_setup_kwargs(config: Config, data: pd.DataFrame, experiment_name: str) 
         "multicollinearity_threshold", "pca", "pca_method", "pca_components", "ignore_features", "normalize", 
         "normalize_method", "transformation", "transformation_method", "group_features", "categorical_features", 
         "ordinal_features", "numeric_features", "high_cardinality_features", "date_features", "combine_rare_levels",
-        "rare_level_threshold"]
+        "rare_level_threshold", "n_jobs"]
     for config_arg in config_args:
         kwargs[config_arg] = config.get(config_arg)
 
