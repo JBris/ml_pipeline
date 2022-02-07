@@ -6,4 +6,7 @@ n_estimators: 10
 n_iter: 10
 turbo: false
 early_stopping_algo: asha
+custom_grid: {}
 include_estimators: []
+additional_regressors: []
+additional_classifiers: []

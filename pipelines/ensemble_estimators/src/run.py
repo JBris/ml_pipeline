@@ -54,15 +54,9 @@ TARGET_VAR = CONFIG.get("target")
 # Estimator
 EST_TASK = CONFIG.get("est_task")
 if EST_TASK == EstimatorTask.REGRESSION.value:
-    # from sklearn.linear_model import SGDRegressor, GammaRegressor, RANSACRegressor
-    # from sklearn.neighbors import RadiusNeighborsRegressor
     ESTIMATOR = PyCaretRegressor()
-    ADDITIONAL_ESTIMATORS = [
-        # SGDRegressor(), GammaRegressor(), RANSACRegressor(), RadiusNeighborsRegressor()
-    ]
 else:
     ESTIMATOR = PyCaretClassifier()
-    ADDITIONAL_ESTIMATORS = []
 
 # Distributed
 RUN_DISTRIBUTED = CONFIG.get("run_distributed")
@@ -115,7 +109,7 @@ def main() -> None:
     est_setup = setup(ESTIMATOR, CONFIG, data, EXPERIMENT_NAME)
 
     # Estimator fitting
-    best_model, final_ensemble = train_ensemble_estimators(ESTIMATOR, CONFIG, SEARCH_ALGORITHM, SEARCH_LIBRARY, ADDITIONAL_ESTIMATORS)
+    best_model, final_ensemble = train_ensemble_estimators(ESTIMATOR, CONFIG, SEARCH_ALGORITHM, SEARCH_LIBRARY)
 
     # Evaluate model
     training_preds, training_mae, training_mse = _predict_reg_model(best_model)

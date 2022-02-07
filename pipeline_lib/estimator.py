@@ -14,6 +14,9 @@ import pandas as pd
 import pycaret.classification
 import pycaret.regression
 import sklearn
+
+from sklearn.linear_model import SGDRegressor, GammaRegressor, RANSACRegressor
+from sklearn.neighbors import RadiusNeighborsRegressor
 from typing import Any, List, Tuple, Union
 
 from enum import Enum, unique
@@ -43,6 +46,10 @@ class PyCaretEstimatorBase(metaclass = abc.ABCMeta):
 
     @abc.abstractmethod
     def compare_models(self, **kwargs):
+        return
+
+    @abc.abstractmethod
+    def pull(self, **kwargs):
         return
 
     @abc.abstractmethod
@@ -109,6 +116,9 @@ class PyCaretRegressor(PyCaretEstimatorBase):
     def compare_models(self, **kwargs):
         return pycaret.regression.compare_models(**kwargs)
 
+    def pull(self, **kwargs):
+        return pycaret.regression.pull(**kwargs)
+
     def tune_model(self, estimator, **kwargs):
         return pycaret.regression.tune_model(estimator, **kwargs)
 
@@ -159,6 +169,9 @@ class PyCaretClassifier(PyCaretEstimatorBase):
     def compare_models(self, **kwargs):
         return pycaret.classification.compare_models(**kwargs)
 
+    def pull(self, **kwargs):
+        return pycaret.classification.pull(**kwargs)
+
     def tune_model(self, estimator, **kwargs):
         return pycaret.classification.tune_model(estimator, **kwargs)
 
@@ -201,29 +214,47 @@ class PyCaretClassifier(PyCaretEstimatorBase):
     def load_model(self, model_name: str):
         return pycaret.classification.load_model(model_name)
 
+ADDITIONAL_REGRESSORS = {
+    "sgd": SGDRegressor,
+    "gam": GammaRegressor,
+    "rnn": RadiusNeighborsRegressor
+}
+
+ADDITIONAL_REGRESSOR_GRIDS = {
+    "sgd": {},
+    "gam": {},
+    "ransac": {},
+    "rnn": {}
+}
+
+ADDITIONAL_CLASSIFIERS = {}
+ADDITIONAL_CLASSIFIER_GRIDS = {}
+
 def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, search_algorithm: str, 
-    search_library: str, include_estimators: List[Union[str, Any]] = []) -> Tuple[sklearn.base.BaseEstimator]:    
+    search_library: str) -> Tuple[sklearn.base.BaseEstimator]:    
     """Train several ensemble models, and return the best performing one."""
     evaluation_metric = config.get("evaluation_metric")
     n_estimators = config.get("n_estimators")
     n_iter = config.get("n_iter")
-    include_estimators += config.get("include_estimators")
+    custom_grid = config.get("custom_grid")
 
     # Train and tune estimators
-    top_models = estimator.compare_models(include = include_estimators, n_select = config.get("n_select"), 
+    top_models = estimator.compare_models(include = config.get("include_estimators"), n_select = config.get("n_select"), 
         sort = evaluation_metric, turbo = config.get("turbo"))
+    sorted_models = estimator.pull().index
+
     tuned_top = [ 
         estimator.tune_model(model, search_algorithm = search_algorithm, optimize = evaluation_metric,
-            search_library = search_library, n_iter = n_iter, custom_grid = config.get("custom_grid"), 
+            search_library = search_library, n_iter = n_iter, custom_grid = custom_grid.get(sorted_models[i]), 
             early_stopping = config.get("early_stopping_algo"), early_stopping_max_iters = config.get("early_stop"), 
             choose_better = True) 
-        for model in top_models 
+        for i, model in enumerate(top_models) 
     ]
 
     # Train ensemble estimators
     meta_model = estimator.create_model(config.get("meta_model"))
     tuned_meta_model = estimator.tune_model(meta_model, search_algorithm = search_algorithm, 
-        optimize = evaluation_metric, search_library = search_library, n_iter = n_iter, custom_grid = config.get("custom_grid"))  
+        optimize = evaluation_metric, search_library = search_library, n_iter = n_iter, custom_grid = custom_grid.get(meta_model)) 
     stacking_ensemble = estimator.stack_models(tuned_top, optimize = evaluation_metric, meta_model = tuned_meta_model)
     blending_ensemble = estimator.blend_models(tuned_top, optimize = evaluation_metric, choose_better = True)
     boosting_ensemble = estimator.ensemble_model(tuned_top[0], method = "Boosting", optimize = evaluation_metric, 
