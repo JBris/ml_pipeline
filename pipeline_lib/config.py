@@ -30,22 +30,25 @@ class Config:
         self.params_override = {} 
         self.env_var_prefixes = ["MLFLOW_", "RAY_"]
 
-    def get(self, key: str) -> Any:
+    def get(self, k: str, export: bool = True) -> Any:
         """Get a configuration value."""
-        v = self.config.get(key)
-        self.params_override[key] = v
+        v = self.config.get(k)
+        if export:
+            self.params_override[k] = v
         return v
 
-    def get_as(self, key: str, v_type: type) -> Any:
+    def get_as(self, k: str, v_type: type, export: bool = True) -> Any:
         """Get and cast a configuration value."""
-        v = v_type(self.config.get(key))
-        self.params_override[key] = v
+        v = v_type(self.config.get(k))
+        if export:
+            self.params_override[k] = v
         return v
 
-    def set(self, key: str, value: Any):
+    def set(self, k: str, v: Any, export: bool = True):
         """Set a configuration value."""
-        self.config[key] = value
-        self.params_override[key] = value
+        self.config[k] = v
+        if export:
+            self.params_override[k] = v
         return self
 
     def from_env(self):

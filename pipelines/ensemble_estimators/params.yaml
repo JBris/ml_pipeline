@@ -8,5 +8,13 @@ turbo: false
 early_stopping_algo: asha
 custom_grid: {}
 include_estimators: []
-additional_regressors: []
-additional_classifiers: []
+custom_regressors: []
+custom_classifiers: []
+custom_regressor_grid: 
+  sgd:
+    # loss: ["squared_error", "huber", "epsilon_insensitive", "squared_epsilon_insensitive"]
+    penalty: ["l2", "l1", "elasticnet"]
+    learning_rate: ["constant", "optimal", "invscaling", "adaptive"]
+  gamma:
+    alpha: [0, 0.5, 1]
+custom_classifier_grid: {}

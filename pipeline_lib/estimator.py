@@ -1,5 +1,5 @@
 """
-Machine Learning Pipeline estimators
+Machine Learning Pipeline Estimators
 
 A library of estimators for the machine learning pipeline.
 """
@@ -15,14 +15,13 @@ import pycaret.classification
 import pycaret.regression
 import sklearn
 
-from sklearn.linear_model import SGDRegressor, GammaRegressor, RANSACRegressor
-from sklearn.neighbors import RadiusNeighborsRegressor
-from typing import Any, List, Tuple, Union
+from typing import List, Tuple
 
 from enum import Enum, unique
 from joblib import dump
 
 # Internal
+from pipeline_lib.custom_estimators import CUSTOM_REGRESSORS, CUSTOM_CLASSIFIERS 
 from pipeline_lib.config import Config
 from pipeline_lib.data import join_path
 
@@ -214,21 +213,42 @@ class PyCaretClassifier(PyCaretEstimatorBase):
     def load_model(self, model_name: str):
         return pycaret.classification.load_model(model_name)
 
-ADDITIONAL_REGRESSORS = {
-    "sgd": SGDRegressor,
-    "gam": GammaRegressor,
-    "rnn": RadiusNeighborsRegressor
-}
+def add_custom_estimators(estimator: PyCaretEstimatorBase, config: Config, search_algorithm: str, 
+    search_library: str, tuned_top: List[sklearn.base.BaseEstimator]) -> List[sklearn.base.BaseEstimator]:    
+    """Add custom est"""
 
-ADDITIONAL_REGRESSOR_GRIDS = {
-    "sgd": {},
-    "gam": {},
-    "ransac": {},
-    "rnn": {}
-}
+    if config.get("est_task") == EstimatorTask.REGRESSION.value:
+        custom_estimators = config.get("custom_regressors")
+        available_estimators = CUSTOM_REGRESSORS
+        custom_grid = config.get("custom_regressor_grid")
+    else:
+        custom_estimators = config.get("custom_classifiers")
+        available_estimators = CUSTOM_CLASSIFIERS
+        custom_grid = config.get("custom_classifier_grid")
 
-ADDITIONAL_CLASSIFIERS = {}
-ADDITIONAL_CLASSIFIER_GRIDS = {}
+    if len(custom_estimators) == 0:
+        return tuned_top
+
+    for k, v in config.get("custom_grid").items():
+        custom_grid[k] = v
+
+    model_list = []
+    evaluation_metric = config.get("evaluation_metric")
+    for custom_estimator in custom_estimators:
+        if custom_estimator not in available_estimators:
+            continue
+
+        estimator_instance = available_estimators.get(custom_estimator)()
+        trained_model = estimator.create_model(estimator_instance)
+        tuned_model = estimator.tune_model(trained_model, search_algorithm = search_algorithm, optimize = evaluation_metric,
+            search_library = search_library, n_iter = config.get("n_iter"), custom_grid = custom_grid.get(custom_estimator), 
+            early_stopping = config.get("early_stopping_algo"), early_stopping_max_iters = config.get("early_stop"), 
+            choose_better = True) 
+        model_list.append(tuned_model)
+
+    combined_models = estimator.compare_models(include = tuned_top + model_list, n_select = config.get("n_select"), 
+        sort = evaluation_metric, turbo = config.get("turbo"))
+    return combined_models
 
 def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, search_algorithm: str, 
     search_library: str) -> Tuple[sklearn.base.BaseEstimator]:    
@@ -250,6 +270,8 @@ def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, s
             choose_better = True) 
         for i, model in enumerate(top_models) 
     ]
+
+    tuned_top = add_custom_estimators(estimator, config, search_algorithm, search_library, tuned_top)
 
     # Train ensemble estimators
     meta_model = estimator.create_model(config.get("meta_model"))
@@ -285,6 +307,7 @@ def _get_setup_kwargs(config: Config, data: pd.DataFrame, experiment_name: str) 
         "log_data": use_mlflow,
         "profile": use_mlflow,
         "silent": True,
+        "categorical_imputation": "mode",
         "session_id": config.get("random_seed")
     }
 
