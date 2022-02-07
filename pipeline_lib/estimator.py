@@ -14,7 +14,7 @@ import pandas as pd
 import pycaret.classification
 import pycaret.regression
 import sklearn
-from typing import Tuple
+from typing import Any, List, Tuple, Union
 
 from enum import Enum, unique
 from joblib import dump
@@ -202,17 +202,21 @@ class PyCaretClassifier(PyCaretEstimatorBase):
         return pycaret.classification.load_model(model_name)
 
 def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, search_algorithm: str, 
-    search_library: str) -> Tuple[sklearn.base.BaseEstimator]:    
+    search_library: str, include_estimators: List[Union[str, Any]] = []) -> Tuple[sklearn.base.BaseEstimator]:    
     """Train several ensemble models, and return the best performing one."""
     evaluation_metric = config.get("evaluation_metric")
     n_estimators = config.get("n_estimators")
     n_iter = config.get("n_iter")
+    include_estimators += config.get("include_estimators")
 
     # Train and tune estimators
-    top_models = estimator.compare_models(n_select = config.get("n_select"), sort = evaluation_metric, turbo = config.get("turbo"))
+    top_models = estimator.compare_models(include = include_estimators, n_select = config.get("n_select"), 
+        sort = evaluation_metric, turbo = config.get("turbo"))
     tuned_top = [ 
         estimator.tune_model(model, search_algorithm = search_algorithm, optimize = evaluation_metric,
-            search_library = search_library, n_iter = n_iter, custom_grid = config.get("custom_grid")) 
+            search_library = search_library, n_iter = n_iter, custom_grid = config.get("custom_grid"), 
+            early_stopping = config.get("early_stopping_algo"), early_stopping_max_iters = config.get("early_stop"), 
+            choose_better = True) 
         for model in top_models 
     ]
 

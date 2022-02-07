@@ -62,6 +62,7 @@ turbo: true
 supervised_estimator: lr
 use_gpu: true
 n_jobs: -1
+early_stop: 50
 
 # Evaluation
 evaluation_metric: MSE

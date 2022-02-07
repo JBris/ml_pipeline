@@ -5,3 +5,5 @@ n_select: 5
 n_estimators: 10
 n_iter: 10
 turbo: false
+early_stopping_algo: asha
+include_estimators: []
