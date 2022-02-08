@@ -1,0 +1,4 @@
+evaluation_metric: MSE
+meta_model: lr
+n_iter: 10
+custom_grid: {}

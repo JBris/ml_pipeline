@@ -1,0 +1,11 @@
+name: interpret_ml
+
+# conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      base_dir: { type: string, default: "." } 
+      scenario: { type: string, default: "." } 
+      from_params: { type: string, default: "." } 
+    command: python src/run.py  --base_dir {base_dir} --scenario {scenario} --from_params {from_params}

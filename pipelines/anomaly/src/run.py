@@ -50,9 +50,11 @@ TARGET_VAR = CONFIG.get("target")
 
 # Model
 if CONFIG.get("custom_anomaly_model"):
-    MODEL = get_unsupervised_custom_model(CONFIG.get("custom_anomaly_model"), EstimatorTask.ANOMALY_DETECTION.value)
+    MODEL_ID = CONFIG.get("custom_anomaly_model")
+    MODEL = get_unsupervised_custom_model(MODEL_ID, EstimatorTask.ANOMALY_DETECTION.value)
 else:
-    MODEL = CONFIG.get("anomaly_model") #abod, cluster, cof, histogram, knn, lof, svm, pca, mcd, sod, sos, iforest
+    MODEL_ID = CONFIG.get("anomaly_model")
+    MODEL = MODEL_ID #abod, cluster, cof, histogram, knn, lof, svm, pca, mcd, sod, sos, iforest
 
 # Random
 RANDOM_STATE = CONFIG.get("random_seed") 
@@ -80,7 +82,7 @@ def main() -> None:
     # Tune model
     if TARGET_VAR:
         model = tune_model(model, supervised_target = TARGET_VAR, supervised_estimator = CONFIG.get("supervised_estimator"),
-            optimize = CONFIG.get("evaluation_metric"), fold = CONFIG.get("fold"), custom_grid = CONFIG.get("custom_grid")) 
+            optimize = CONFIG.get("evaluation_metric"), fold = CONFIG.get("fold"), custom_grid = CONFIG.get("custom_grid").get(MODEL_ID)) 
     # Assign anomalies
     assigned_df = assign_model(model, score = True)
 

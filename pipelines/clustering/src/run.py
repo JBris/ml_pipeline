@@ -50,9 +50,11 @@ TARGET_VAR = CONFIG.get("target")
 
 # Model
 if CONFIG.get("custom_clustering_model"):
-    MODEL = get_unsupervised_custom_model(CONFIG.get("custom_clustering_model"), EstimatorTask.CLUSTERING.value)
+    MODEL_ID = CONFIG.get("custom_clustering_model")
+    MODEL = get_unsupervised_custom_model(MODEL_ID, EstimatorTask.CLUSTERING.value)
 else:
-    MODEL = CONFIG.get("clustering_model") #kmeans, ap, meanshift, sc, hclust, dbscan, optics, birch, kmodes 
+    MODEL_ID = CONFIG.get("clustering_model")
+    MODEL = MODEL_ID #kmeans, ap, meanshift, sc, hclust, dbscan, optics, birch, kmodes 
 
 # Random
 RANDOM_STATE = CONFIG.get("random_seed") 
@@ -80,7 +82,7 @@ def main() -> None:
     # Tune model
     if TARGET_VAR:
         model = tune_model(model, supervised_target = TARGET_VAR, supervised_estimator = CONFIG.get("supervised_estimator"),
-            optimize = CONFIG.get("evaluation_metric"), fold = CONFIG.get("fold"), custom_grid = CONFIG.get("custom_grid")) 
+            optimize = CONFIG.get("evaluation_metric"), fold = CONFIG.get("fold"), custom_grid = CONFIG.get("custom_grid").get(MODEL_ID)) 
     # Assign clusters
     assigned_df = assign_model(model)
 

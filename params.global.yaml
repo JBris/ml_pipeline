@@ -48,7 +48,7 @@ cluster_iter: 20
 
 # Training
 search_algorithm: random
-custom_grid: null
+custom_grid: {}
 distributed_search_algorithm: optuna
 search_library: scikit-learn 
 distributed_search_library: tune-sklearn
@@ -63,6 +63,7 @@ supervised_estimator: lr
 use_gpu: true
 n_jobs: -1
 early_stop: 50
+early_stopping_algo: asha
 
 # Evaluation
 evaluation_metric: MSE
