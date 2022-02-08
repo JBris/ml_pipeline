@@ -10,11 +10,17 @@ custom_grid: {}
 include_estimators: []
 custom_regressors: []
 custom_classifiers: []
-custom_regressor_grid: 
+custom_regressor_grid:
+  gamma:
+    alpha: [0, 0.5, 1]
+  gp: 
+    alpha: [1.0e-10]
+    optimizer: [fmin_l_bfgs_b]
   sgd:
     # loss: ["squared_error", "huber", "epsilon_insensitive", "squared_epsilon_insensitive"]
     penalty: ["l2", "l1", "elasticnet"]
     learning_rate: ["constant", "optimal", "invscaling", "adaptive"]
-  gamma:
+  tweedie:
+    power: [0, 1, 1.5, 2, 3]
     alpha: [0, 0.5, 1]
 custom_classifier_grid: {}

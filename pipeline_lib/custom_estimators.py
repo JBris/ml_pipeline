@@ -14,10 +14,9 @@ from pyod.models.lmdd import LMDD
 from pyod.models.loci import LOCI
 from pyod.models.loda import LODA
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.linear_model import SGDRegressor, GammaRegressor
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.linear_model import GammaRegressor, SGDRegressor, TweedieRegressor
 from sklearn.mixture import GaussianMixture as GaussianMixtureBase, BayesianGaussianMixture as BayesianGaussianMixtureBase
-
-# Internal
 
 ##########################################################################################################
 ### Library  
@@ -28,8 +27,10 @@ from sklearn.mixture import GaussianMixture as GaussianMixtureBase, BayesianGaus
 ##########################################################################################################
 
 CUSTOM_REGRESSORS = {
+    "gamma": GammaRegressor,
+    "gp": GaussianProcessRegressor,
     "sgd": SGDRegressor,
-    "gamma": GammaRegressor
+    "tweedie": TweedieRegressor
 }
 
 ##########################################################################################################

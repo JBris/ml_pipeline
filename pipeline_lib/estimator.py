@@ -263,6 +263,8 @@ def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, s
         sort = evaluation_metric, turbo = config.get("turbo"))
     sorted_models = estimator.pull().index
 
+    if type(top_models) is not list:
+        top_models = [top_models]
     tuned_top = [ 
         estimator.tune_model(model, search_algorithm = search_algorithm, optimize = evaluation_metric,
             search_library = search_library, n_iter = n_iter, custom_grid = custom_grid.get(sorted_models[i]), 
