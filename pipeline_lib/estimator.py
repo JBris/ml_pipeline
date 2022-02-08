@@ -21,7 +21,7 @@ from enum import Enum, unique
 from joblib import dump
 
 # Internal
-from pipeline_lib.custom_estimators import CUSTOM_REGRESSORS, CUSTOM_CLASSIFIERS 
+from pipeline_lib.custom_estimators import CUSTOM_ANOMALY_DETECTION, CUSTOM_CLASSIFIERS, CUSTOM_CLUSTERING, CUSTOM_REGRESSORS 
 from pipeline_lib.config import Config
 from pipeline_lib.data import join_path
 
@@ -343,6 +343,12 @@ def unsupervised_setup(config: Config, data: pd.DataFrame, experiment_name: str,
     kwargs = _get_setup_kwargs(config, data, experiment_name)
     return setup(**kwargs) 
 
+def get_unsupervised_custom_model(model_name: str, type: str, **kwargs) -> sklearn.base.BaseEstimator:
+    if type == EstimatorTask.ANOMALY_DETECTION.value:
+        return CUSTOM_ANOMALY_DETECTION.get(model_name)(**kwargs)
+    else:
+        return CUSTOM_CLUSTERING.get(model_name)(**kwargs)
+    
 def save_local_model(model, experiment_name: str, path = "data") -> str:
     """Save the model to a local directory."""
     model_path = join_path(path, f"{experiment_name}.joblib")

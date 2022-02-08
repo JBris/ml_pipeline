@@ -1,3 +1,4 @@
 anomaly_model: pca
+custom_anomaly_model: null
 contamination_fraction: 0.05
 anomaly_plot: umap

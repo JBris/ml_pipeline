@@ -7,7 +7,7 @@ import argparse
 import os, sys
 import tempfile
 
-from pycaret.anomaly import (create_model, assign_model, plot_model, tune_model)
+from pycaret.anomaly import (create_model, assign_model, plot_model, tune_model, models)
 
 base_dir = "../.."
 sys.path.insert(0, os.path.abspath(base_dir))
@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(base_dir))
 # Internal 
 from pipeline_lib.config import add_argument, get_config
 from pipeline_lib.data import Data, join_path
-from pipeline_lib.estimator import EstimatorTask, unsupervised_setup
+from pipeline_lib.estimator import EstimatorTask, get_unsupervised_custom_model, unsupervised_setup
 from pipeline_lib.pipelines import end_mlflow, init_mlflow, PlotParameters, save_local_results, save_mlflow_results
 
 ##########################################################################################################
@@ -49,7 +49,10 @@ FILE_NAME = join_path(BASE_DIR, CONFIG.get("file_path"))
 TARGET_VAR = CONFIG.get("target")
 
 # Model
-MODEL = CONFIG.get("anomaly_model") #abod, cluster, cof, histogram, knn, lof, svm, pca, mcd, sod, sos
+if CONFIG.get("custom_anomaly_model"):
+    MODEL = get_unsupervised_custom_model(CONFIG.get("custom_anomaly_model"), EstimatorTask.ANOMALY_DETECTION.value)
+else:
+    MODEL = CONFIG.get("anomaly_model") #abod, cluster, cof, histogram, knn, lof, svm, pca, mcd, sod, sos, iforest
 
 # Random
 RANDOM_STATE = CONFIG.get("random_seed") 
