@@ -107,6 +107,10 @@ class PyCaretEstimatorBase(metaclass = abc.ABCMeta):
     def load_model(self, model_name: str):
         return
 
+    @abc.abstractmethod
+    def get_config(self, variable: str):
+        return
+
 class PyCaretRegressor(PyCaretEstimatorBase):
     """Estimator for regression."""
     def setup(self, **kwargs):
@@ -160,6 +164,9 @@ class PyCaretRegressor(PyCaretEstimatorBase):
     def load_model(self, model_name: str):
         return pycaret.regression.load_model(model_name)
 
+    def get_config(self, variable: str):
+        return pycaret.regression.get_config(variable)
+
 class PyCaretClassifier(PyCaretEstimatorBase):
     """Estimator for classification."""
     def setup(self, **kwargs):
@@ -212,6 +219,9 @@ class PyCaretClassifier(PyCaretEstimatorBase):
 
     def load_model(self, model_name: str):
         return pycaret.classification.load_model(model_name)
+
+    def get_config(self, variable: str):
+        return pycaret.classification.get_config(variable)
 
 def add_custom_estimators(estimator: PyCaretEstimatorBase, config: Config, search_algorithm: str, 
     search_library: str, tuned_top: List[sklearn.base.BaseEstimator]) -> List[sklearn.base.BaseEstimator]:    

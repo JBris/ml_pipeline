@@ -9,6 +9,7 @@ A library of custom estimators for the machine learning pipeline.
 ##########################################################################################################
 
 # External
+from interpret.glassbox import ExplainableBoostingClassifier, ExplainableBoostingRegressor
 from pyod.models.copod import COPOD
 from pyod.models.lmdd import LMDD
 from pyod.models.loci import LOCI
@@ -27,6 +28,7 @@ from sklearn.mixture import GaussianMixture as GaussianMixtureBase, BayesianGaus
 ##########################################################################################################
 
 CUSTOM_REGRESSORS = {
+    "ebm": ExplainableBoostingRegressor,
     "gamma": GammaRegressor,
     "gp": GaussianProcessRegressor,
     "sgd": SGDRegressor,
@@ -37,7 +39,9 @@ CUSTOM_REGRESSORS = {
 ### Classification  
 ##########################################################################################################
 
-CUSTOM_CLASSIFIERS = {}
+CUSTOM_CLASSIFIERS = {
+    "ebm": ExplainableBoostingClassifier
+}
 
 ##########################################################################################################
 ### Anomaly Detection  

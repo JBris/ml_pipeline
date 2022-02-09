@@ -4,6 +4,7 @@
 
 # External
 import argparse
+import numpy as np
 import os, sys
 import pandas as pd
 
@@ -16,10 +17,11 @@ base_dir = "../.."
 sys.path.insert(0, os.path.abspath(base_dir))
 
 # Internal 
+from pipeline_lib.custom_estimators import CUSTOM_CLASSIFIERS, CUSTOM_REGRESSORS
 from pipeline_lib.config import Config, add_argument, get_config
 from pipeline_lib.data import Data, join_path
 from pipeline_lib.estimator import EstimatorTask, PyCaretClassifier, PyCaretRegressor, setup
-from pipeline_lib.pipelines import end_mlflow, init_mlflow, PlotParameters, save_local_results, save_mlflow_results
+from pipeline_lib.pipelines import end_mlflow, init_mlflow, PlotParameters, save_local_results, save_mlflow_results, pipeline_plots
 
 ##########################################################################################################
 ### Parameters
@@ -53,10 +55,16 @@ TARGET_VAR = CONFIG.get("target")
 
 # Estimator
 EST_TASK = CONFIG.get("est_task")
+LINEAR_MODELS = ["lr", "ridge"]
+TREE_MODEL = "dt"
+EBM_KEY = "ebm"
 if EST_TASK == EstimatorTask.REGRESSION.value:
     ESTIMATOR = PyCaretRegressor()
+    LINEAR_MODELS.append("lasso")
+    EBM = CUSTOM_REGRESSORS.get(EBM_KEY)
 else:
     ESTIMATOR = PyCaretClassifier()
+    EBM = CUSTOM_CLASSIFIERS.get(EBM_KEY)
 
 # Distributed
 RUN_DISTRIBUTED = CONFIG.get("run_distributed")
@@ -79,19 +87,6 @@ USE_MLFLOW = CONFIG.get("use_mlflow")
 ### Pipeline
 ##########################################################################################################
 
-def _predict_reg_model(model, data = None):
-    predictions = ESTIMATOR.predict_model(model, data = data)
-    mae = check_metric(predictions[TARGET_VAR], predictions.Label, 'MAE')
-    mse = check_metric(predictions[TARGET_VAR], predictions.Label, 'MSE')
-    return predictions, mae, mse
-
-def _save_reg_metrics(log_metric, mae, mse, preds, prefix):
-    log_metric(f"{prefix}_mae", mae)
-    log_metric(f"{prefix}_mse", mse)
-    for i, (y, predictions) in enumerate(zip(preds[TARGET_VAR], preds.Label)):
-        log_metric(key = f"{prefix}_actual", value = y, step = i)
-        log_metric(key = f"{prefix}_prediction", value = predictions, step = i)
-
 def main() -> None:
     if RUN_DISTRIBUTED:
         import ray
@@ -100,43 +95,80 @@ def main() -> None:
     if USE_MLFLOW:
         import mlflow
         tmp_dir = init_mlflow(CONFIG)
+        save_dir = tmp_dir.name
+    else:
+        save_dir = "data"
 
     # Data split
-    df = DATA.read_csv(FILE_NAME)
-    data, data_unseen = DATA.train_test_split(df, frac = CONFIG.get("training_frac"), random_state = RANDOM_STATE)
+    df = DATA.read_csv(FILE_NAME) 
 
     # Data preprocessing
-    est_setup = setup(ESTIMATOR, CONFIG, data, EXPERIMENT_NAME)
+    est_setup = setup(ESTIMATOR, CONFIG, df, EXPERIMENT_NAME)
 
-    # Estimator fitting
-    best_model, final_ensemble = train_ensemble_estimators(ESTIMATOR, CONFIG, SEARCH_ALGORITHM, SEARCH_LIBRARY)
+    # Interpretable model fitting
+    coefficients = []
+    custom_grid = CONFIG.get("custom_grid")
+    evaluation_metric = CONFIG.get("evaluation_metric")
+    n_iter = CONFIG.get("n_iter")
+    early_stopping_algo = CONFIG.get("early_stopping_algo")
+    early_stop = CONFIG.get("early_stop")
+    plot_params = PlotParameters(ESTIMATOR.plot_model, plots = ["residuals", "error", "feature_all", "rfe"])
 
-    # Evaluate model
-    training_preds, training_mae, training_mse = _predict_reg_model(best_model)
-    testing_preds, testing_mae, testing_mse = _predict_reg_model(best_model, data_unseen)
-    final_preds, final_mae, final_mse = _predict_reg_model(final_ensemble, data_unseen)
+    for linear_model in LINEAR_MODELS:
+        trained_lm = ESTIMATOR.create_model(linear_model)
+        tuned_lm = ESTIMATOR.tune_model(trained_lm, search_algorithm = SEARCH_ALGORITHM, optimize = evaluation_metric,
+            search_library = SEARCH_LIBRARY, n_iter = n_iter, custom_grid = custom_grid.get(linear_model), 
+            early_stopping = early_stopping_algo, early_stopping_max_iters = early_stop, 
+            choose_better = True) 
+
+        plot_params.model = tuned_lm
+        image_dir = join_path(save_dir, linear_model)  
+        os.makedirs(image_dir, exist_ok = True)
+        pipeline_plots(plot_params, tuned_lm, image_dir, USE_MLFLOW)
+        coef = np.append(tuned_lm.intercept_, tuned_lm.coef_)
+        coefficients.append(coef)
+    
+    coefficients_df = pd.DataFrame(coefficients, columns = np.append(["intercept"], ESTIMATOR.get_config('X_train').columns),
+        index = LINEAR_MODELS)
+
+    trained_tm = ESTIMATOR.create_model(TREE_MODEL)
+    tuned_tm = ESTIMATOR.tune_model(trained_tm, search_algorithm = SEARCH_ALGORITHM, optimize = evaluation_metric,
+        search_library = SEARCH_LIBRARY, n_iter = n_iter, custom_grid = custom_grid.get(TREE_MODEL), 
+        early_stopping = early_stopping_algo, early_stopping_max_iters = early_stop, 
+        choose_better = True) 
+
+    plot_params.model = tuned_tm
+    image_dir = join_path(save_dir, TREE_MODEL)  
+    os.makedirs(image_dir, exist_ok = True)
+    plot_params.plots = ["residuals", "error", "feature_all", "rfe"]
+    pipeline_plots(plot_params, tuned_tm, image_dir, USE_MLFLOW)
+
+    for plot in ["summary", "correlation", "reason", "pdp", "msa"]:
+        ESTIMATOR.interpret_model(tuned_tm, plot = plot, save = image_dir)
+
+    ebm_model = ESTIMATOR.create_model(EBM())
+    if CONFIG.get("tune_ebm"):
+        ebm_model = ESTIMATOR.tune_model(ebm_model, search_algorithm = SEARCH_ALGORITHM, optimize = evaluation_metric,
+            search_library = SEARCH_LIBRARY, n_iter = n_iter, custom_grid = custom_grid.get(EBM_KEY), 
+            early_stopping = early_stopping_algo, early_stopping_max_iters = early_stop, 
+            choose_better = True) 
+    
+    image_dir = join_path(save_dir, EBM_KEY)  
+    os.makedirs(image_dir, exist_ok = True)
+    plot_params.model = ebm_model
+    plot_params.plots = ["residuals", "error"]
+    pipeline_plots(plot_params, ebm_model, image_dir, USE_MLFLOW)
+    for plot in ["msa", "pdp"]:  
+        ESTIMATOR.interpret_model(ebm_model, plot = plot, save = image_dir)
 
     # Save results
-    plot_params = PlotParameters(ESTIMATOR.plot_model, plots = ["residuals", "error"], model = best_model)
     if USE_MLFLOW:
-        save_mlflow_results(CONFIG, final_ensemble, EXPERIMENT_NAME, tmp_dir, plot_params = plot_params)
-
-        _save_reg_metrics(mlflow.log_metric, training_mae, training_mse, training_preds, "training")
-        _save_reg_metrics(mlflow.log_metric, testing_mae, testing_mse, testing_preds, "testing")
-        _save_reg_metrics(mlflow.log_metric, final_mae, final_mse, final_preds, "final")
-
+        for model in LINEAR_MODELS + [TREE_MODEL, EBM_KEY]:
+            mlflow.log_artifact(join_path(save_dir, model))
+        save_mlflow_results(CONFIG, ebm_model, EXPERIMENT_NAME, tmp_dir, assigned_df = coefficients_df)
         end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
     else:
-        save_local_results(CONFIG, final_ensemble, EXPERIMENT_NAME, plot_params = plot_params)
-
-        pd.DataFrame({
-            "training_mae": training_mae,
-            "training_mse": training_mse,
-            "testing_mae": testing_mae,
-            "testing_mse": testing_mse,
-            "final_mae": final_mae,
-            "final_mse": final_mse
-        }, index = [0]).to_csv(join_path("data", f"{EXPERIMENT_NAME}_metrics.csv")) 
+        save_local_results(CONFIG, ebm_model, EXPERIMENT_NAME, assigned_df = coefficients_df)
 
     if RUN_DISTRIBUTED:
         ray.shutdown()
