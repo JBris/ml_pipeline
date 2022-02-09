@@ -161,6 +161,8 @@ def main() -> None:
     for plot in ["msa", "pdp"]:  
         ESTIMATOR.interpret_model(ebm_model, plot = plot, save = image_dir)
 
+    ebm_model.explain_global().visualize().write_html(join_path(image_dir, "global_explanations.html"))
+    
     # Save results
     if USE_MLFLOW:
         for model in LINEAR_MODELS + [TREE_MODEL, EBM_KEY]:
