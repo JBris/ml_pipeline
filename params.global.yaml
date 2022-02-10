@@ -68,3 +68,6 @@ early_stopping_algo: asha
 # Evaluation
 evaluation_metric: MSE
   
+# Visualisations
+anomaly_plot: umap
+clustering_plot: tsne
