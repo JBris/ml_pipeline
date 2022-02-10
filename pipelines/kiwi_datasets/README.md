@@ -6,4 +6,4 @@
 
 ### Introduction
 
-Datasets to demonstrate the ML pipeline
+Example Hayward and Gold kiwifruit datasets.

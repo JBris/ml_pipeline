@@ -1,0 +1,8 @@
+stages:
+  run:
+    cmd: python src/run.py  
+    deps:
+    - src/run.py
+    - data/hw_data_7154.csv
+    outs: 
+    - data/hw_data_7154_extended.csv

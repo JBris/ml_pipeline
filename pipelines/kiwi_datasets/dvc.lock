@@ -1,0 +1,15 @@
+schema: '2.0'
+stages:
+  run:
+    cmd: python src/run.py
+    deps:
+    - path: data/hw_data_7154.csv
+      md5: b2d3398aafa6406a334aacbb4949d9fd
+      size: 641770
+    - path: src/run.py
+      md5: d69289a9bff0db31ef94af14f1cd66d6
+      size: 1480
+    outs:
+    - path: data/hw_data_7154_extended.csv
+      md5: 83bdd255eeae23de25f6805302b1c964
+      size: 907404
