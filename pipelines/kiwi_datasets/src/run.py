@@ -37,7 +37,7 @@ def _add_interactions(path: str):
     df["x_maMAratio"] = df["x"] * df["maMAratio"]
     df["height_calyx_ma"] = df["height"] * df["calyx_ma"]
     df["perimeter_coff"] = df["perimeter"] * df["coff"]
-    df.to_csv(f"data/{path}_extended.csv")
+    df.to_csv(f"data/{path}_extended.csv", index = False)
     
 def main() -> None:
     _add_interactions("hw_data_4217")

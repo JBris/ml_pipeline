@@ -5,7 +5,6 @@
 # External
 import argparse
 import os, sys
-import pandas as pd
 
 from pycaret.utils import check_metric
 
@@ -58,21 +57,15 @@ MODEL_STAGE = CONFIG.get("model_stage")
 
 EST_TASK = CONFIG.get("est_task")
 if EST_TASK == EstimatorTask.REGRESSION.value:
+    from pycaret.regression import load_model, predict_model
     ESTIMATOR = PyCaretRegressor()
-    load_model = ESTIMATOR.load_model
-    predict_model = ESTIMATOR.predict_model
 elif EST_TASK == EstimatorTask.CLASSIFICATION.value:
+    from pycaret.classification import load_model, predict_model
     ESTIMATOR = PyCaretClassifier()
-    load_model = ESTIMATOR.load_model
-    predict_model = ESTIMATOR.predict_model
 elif EST_TASK == EstimatorTask.ANOMALY_DETECTION.value:
-    from pycaret.anomaly import load_model, predict_model
-    load_model = load_model
-    predict_model = predict_model
+    from pycaret.anomaly import load_model, predict_model, plot_model
 else:
-    from pycaret.clustering import load_model, predict_model
-    load_model = load_model
-    predict_model = predict_model
+    from pycaret.clustering import load_model, predict_model, plot_model
 
 # Random
 RANDOM_STATE = CONFIG.get("random_seed") 
@@ -84,35 +77,27 @@ USE_MLFLOW = CONFIG.get("use_mlflow")
 ### Pipeline
 ##########################################################################################################
 
-# def _predict_reg_model(model, data = None):
-#     predictions = ESTIMATOR.predict_model(model, data = data)
-#     mae = check_metric(predictions[TARGET_VAR], predictions.Label, 'MAE')
-#     mse = check_metric(predictions[TARGET_VAR], predictions.Label, 'MSE')
-#     return predictions, mae, mse
+def _save_metrics(log_metric, metrics, preds):
+    for k, v in metrics.items():
+        log_metric(k, v)
 
-# def _save_reg_metrics(log_metric, mae, mse, preds, prefix):
-#     log_metric(f"{prefix}_mae", mae)
-#     log_metric(f"{prefix}_mse", mse)
-#     for i, (y, predictions) in enumerate(zip(preds[TARGET_VAR], preds.Label)):
-#         log_metric(key = f"{prefix}_actual", value = y, step = i)
-#         log_metric(key = f"{prefix}_prediction", value = predictions, step = i)
+    preds_sample = preds.sample(n = 300, random_state = RANDOM_STATE)
+    for i, (y, predictions) in enumerate(zip(preds_sample[TARGET_VAR], preds_sample.Label)):
+        log_metric(key = f"actual_value", value = y, step = i)
+        log_metric(key = f"predicted_value", value = predictions, step = i)
 
 def main() -> None:
     # Load data
     df = DATA.read_csv(FILE_NAME) 
-
+    
     # Setup
-    CONFIG.set("use_mlflow", False)
+    CONFIG.set("use_mlflow", False) # Skip MLFlow logging
     if EST_TASK == EstimatorTask.REGRESSION.value or EST_TASK == EstimatorTask.CLASSIFICATION.value:
         setup(ESTIMATOR, CONFIG, df, EXPERIMENT_NAME)
     elif EST_TASK == EstimatorTask.ANOMALY_DETECTION.value:
         est_setup = unsupervised_setup(CONFIG, df, EXPERIMENT_NAME, EstimatorTask.ANOMALY_DETECTION.value)
-        from pycaret.anomaly import plot_model
-        plot_params = PlotParameters(plot_model, CONFIG.get("label_feature"), [CONFIG.get("anomaly_plot")])
     else:
         est_setup = unsupervised_setup(CONFIG, df, EXPERIMENT_NAME, EstimatorTask.CLUSTERING.value)
-        from pycaret.clustering import plot_model
-        plot_params = PlotParameters(plot_model, CONFIG.get("label_feature"), [CONFIG.get("clustering_plot")])
     CONFIG.set("use_mlflow", USE_MLFLOW)
 
     # # Load model
@@ -141,17 +126,26 @@ def main() -> None:
     df_path = join_path(save_dir, f"{EXPERIMENT_NAME}.csv")
     predictions.to_csv(df_path)
 
-    # Override training data labels to create new plots
+    metrics = {}
+    # Replace existing training data labels to create new plots
     if EST_TASK == EstimatorTask.ANOMALY_DETECTION.value:
         model.labels_ = predictions.Anomaly
+        plot_params = PlotParameters(plot_model, CONFIG.get("label_feature"), [CONFIG.get("anomaly_plot")])
     elif EST_TASK == EstimatorTask.CLUSTERING.value:
         model.labels_ = predictions.Cluster.str.lstrip("Cluster ").astype("int32")
-    
-    # Add visualisations
+        plot_params = PlotParameters(plot_model, CONFIG.get("label_feature"), [CONFIG.get("clustering_plot")])
+    elif EST_TASK == EstimatorTask.REGRESSION.value:
+        plot_params = PlotParameters(ESTIMATOR.plot_model, plots = ["residuals", "error"])
+        metrics["mae"] = check_metric(predictions[TARGET_VAR], predictions.Label, 'MAE')
+        metrics["mse"] = check_metric(predictions[TARGET_VAR], predictions.Label, 'MSE')
+
+        if USE_MLFLOW:
+            _save_metrics(mlflow.log_metric, metrics, predictions)
+
+    # Add plots
     pipeline_plots(plot_params, model, save_dir, USE_MLFLOW)
 
     # Save results
-    # plot_params = PlotParameters(ESTIMATOR.plot_model, plots = ["residuals", "error"], model = best_model)
     if USE_MLFLOW:
         config_path = CONFIG.export(tmp_dir.name)
         mlflow.log_artifact(config_path)
@@ -160,15 +154,10 @@ def main() -> None:
         end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
     else:
         CONFIG.export("data")
-
-        # pd.DataFrame({
-        #     "training_mae": training_mae,
-        #     "training_mse": training_mse,
-        #     "testing_mae": testing_mae,
-        #     "testing_mse": testing_mse,
-        #     "final_mae": final_mae,
-        #     "final_mse": final_mse
-        # }, index = [0]).to_csv(join_path("data", f"{EXPERIMENT_NAME}_metrics.csv")) 
+        pd.DataFrame({
+            "mae": mae,
+            "mse": mse
+        }, index = [0]).to_csv(join_path("data", f"{EXPERIMENT_NAME}_metrics.csv")) 
         
 if __name__ == "__main__":
     main()
