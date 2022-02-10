@@ -3,6 +3,16 @@ stages:
     cmd: python src/run.py  
     deps:
     - src/run.py
+    - data/hw_data_4217.csv
     - data/hw_data_7154.csv
+    - data/ga_data_4217.csv
+    - data/ga_data_7154.csv
+    - data/ga_data_combined.csv
+    - data/hw_data_combined.csv
     outs: 
+    - data/hw_data_4217_extended.csv
     - data/hw_data_7154_extended.csv
+    - data/ga_data_4217_extended.csv
+    - data/ga_data_7154_extended.csv
+    - data/ga_data_combined_extended.csv
+    - data/hw_data_combined_extended.csv
