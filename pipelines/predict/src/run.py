@@ -154,10 +154,8 @@ def main() -> None:
         end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
     else:
         CONFIG.export("data")
-        pd.DataFrame({
-            "mae": mae,
-            "mse": mse
-        }, index = [0]).to_csv(join_path("data", f"{EXPERIMENT_NAME}_metrics.csv")) 
+        if len(metrics.keys()) > 0:
+            pd.DataFrame(metrics, index = [0]).to_csv(join_path("data", f"{EXPERIMENT_NAME}_metrics.csv")) 
         
 if __name__ == "__main__":
     main()
