@@ -102,7 +102,7 @@ def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
         3. Arguments from parser 
         4. The scenario file
         5. params.local.yaml
-        6. An optional config.yaml file to replicate pipelines
+        6. An optional params.override.yaml file to replicate pipelines
 
     Parameters
     --------------
