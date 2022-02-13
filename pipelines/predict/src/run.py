@@ -49,8 +49,9 @@ TARGET_VAR = CONFIG.get("target")
 
 # Estimator
 MODEL_NAME = CONFIG.get("model_name")
-if MODEL_NAME is None:
-    raise Exception(f"Model name not defined.")
+MODEL_PATH = CONFIG.get("model_path")
+if MODEL_NAME is None and MODEL_PATH is None:
+    raise Exception("A model name or model path must be provided.")
 
 MODEL_VERSION = CONFIG.get("model_version")
 MODEL_STAGE = CONFIG.get("model_stage")
@@ -118,7 +119,7 @@ def main() -> None:
             model_uri = model_uri
         )
     else:
-         model = load_model(MODEL_NAME)
+         model = load_model(MODEL_PATH)
          save_dir = "data"
 
     # Perform predictions

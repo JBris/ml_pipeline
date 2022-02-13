@@ -5,6 +5,7 @@
 # External
 import argparse
 import os, sys
+from typing import Callable, List
 import pandas as pd
 
 if "DISABLE_PLOTLY" in os.environ:
@@ -79,15 +80,18 @@ USE_MLFLOW = CONFIG.get("use_mlflow")
 ### Pipeline
 ##########################################################################################################
 
-def _predict_reg_model(model, data = None):
+def _get_prediction_metrics(metrics:dict, model, metrics_list: List[str], prefix: str, data: pd.DataFrame = None):
     predictions = ESTIMATOR.predict_model(model, data = data)
-    mae = check_metric(predictions[TARGET_VAR], predictions.Label, 'MAE')
-    mse = check_metric(predictions[TARGET_VAR], predictions.Label, 'MSE')
-    return predictions, mae, mse
+    for metric in metrics_list:
+        metrics[f"{prefix}_{metric}"] = check_metric(predictions[TARGET_VAR], predictions.Label, metric)        
+    return predictions
 
-def _save_reg_metrics(log_metric, mae, mse, preds, prefix):
-    log_metric(f"{prefix}_mae", mae)
-    log_metric(f"{prefix}_mse", mse)
+def _save_prediction_metrics(log_metric: Callable, metrics: dict, metrics_list: List[str], preds, prefix: str):
+    prefixed_metrics = [ f"{prefix}_{metric}" for metric in metrics_list ]
+    filtered_metrics = { k: metrics[k] for k in prefixed_metrics }
+
+    for k, metric in filtered_metrics.items():
+        log_metric(k, metric)
     for i, (y, predictions) in enumerate(zip(preds[TARGET_VAR], preds.Label)):
         log_metric(key = f"{prefix}_actual", value = y, step = i)
         log_metric(key = f"{prefix}_prediction", value = predictions, step = i)
@@ -112,31 +116,25 @@ def main() -> None:
     best_model, final_ensemble = train_ensemble_estimators(ESTIMATOR, CONFIG, SEARCH_ALGORITHM, SEARCH_LIBRARY)
 
     # Evaluate model
-    training_preds, training_mae, training_mse = _predict_reg_model(best_model)
-    testing_preds, testing_mae, testing_mse = _predict_reg_model(best_model, data_unseen)
-    final_preds, final_mae, final_mse = _predict_reg_model(final_ensemble, data_unseen)
+    metrics = {}
+    if EST_TASK == EstimatorTask.REGRESSION.value:
+        training_preds = _get_prediction_metrics(metrics, best_model, ["MAE", "MSE"], "training")
+        testing_preds = _get_prediction_metrics(metrics, best_model, ["MAE", "MSE"], "testing", data_unseen)
+        final_preds = _get_prediction_metrics(metrics, final_ensemble, ["MAE", "MSE"], "finalised", data_unseen)
+        if USE_MLFLOW:
+            _save_prediction_metrics(mlflow.log_metric, metrics, ["MAE", "MSE"], training_preds, "training")
+            _save_prediction_metrics(mlflow.log_metric, metrics, ["MAE", "MSE"], testing_preds, "testing")
+            _save_prediction_metrics(mlflow.log_metric, metrics, ["MAE", "MSE"], final_preds, "finalised")
 
     # Save results
     plot_params = PlotParameters(ESTIMATOR.plot_model, plots = ["residuals", "error"], model = best_model)
     if USE_MLFLOW:
         save_mlflow_results(CONFIG, final_ensemble, EXPERIMENT_NAME, tmp_dir, plot_params = plot_params)
-
-        _save_reg_metrics(mlflow.log_metric, training_mae, training_mse, training_preds, "training")
-        _save_reg_metrics(mlflow.log_metric, testing_mae, testing_mse, testing_preds, "testing")
-        _save_reg_metrics(mlflow.log_metric, final_mae, final_mse, final_preds, "final")
-
         end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
     else:
         save_local_results(CONFIG, final_ensemble, EXPERIMENT_NAME, plot_params = plot_params)
-
-        pd.DataFrame({
-            "training_mae": training_mae,
-            "training_mse": training_mse,
-            "testing_mae": testing_mae,
-            "testing_mse": testing_mse,
-            "final_mae": final_mae,
-            "final_mse": final_mse
-        }, index = [0]).to_csv(join_path("data", f"{EXPERIMENT_NAME}_metrics.csv")) 
+        if len(metrics.keys()) > 0:
+            pd.DataFrame(metrics, index = [0]).to_csv(join_path("data", f"{EXPERIMENT_NAME}_metrics.csv")) 
 
     if RUN_DISTRIBUTED:
         ray.shutdown()
