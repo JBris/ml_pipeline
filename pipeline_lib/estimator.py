@@ -267,6 +267,7 @@ def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, s
     n_estimators = config.get("n_estimators")
     n_iter = config.get("n_iter")
     custom_grid = config.get("custom_grid")
+    ensemble_methods = set(config.get("ensemble_methods"))
 
     # Train and tune estimators
     top_models = estimator.compare_models(include = config.get("include_estimators"), n_select = config.get("n_select"), 
@@ -286,21 +287,30 @@ def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, s
     tuned_top = add_custom_estimators(estimator, config, search_algorithm, search_library, tuned_top)
 
     # Train ensemble estimators
-    meta_model = estimator.create_model(config.get("meta_model"))
-    tuned_meta_model = estimator.tune_model(meta_model, search_algorithm = search_algorithm, 
-        optimize = evaluation_metric, search_library = search_library, n_iter = n_iter, custom_grid = custom_grid.get(meta_model)) 
-    stacking_ensemble = estimator.stack_models(tuned_top, optimize = evaluation_metric, meta_model = tuned_meta_model)
-    blending_ensemble = estimator.blend_models(tuned_top, optimize = evaluation_metric, choose_better = True)
-    boosting_ensemble = estimator.ensemble_model(tuned_top[0], method = "Boosting", optimize = evaluation_metric, 
-        choose_better = True, n_estimators = n_estimators)
-    bagging_ensemble = estimator.ensemble_model(tuned_top[0], method = "Bagging", optimize = evaluation_metric, 
-        choose_better = True, n_estimators = n_estimators)
-    boosted_top = [ 
-        estimator.ensemble_model(model, method = "Boosting", optimize = evaluation_metric, 
+    if "stacking" in ensemble_methods:
+        meta_model = estimator.create_model(config.get("meta_model"))
+        tuned_meta_model = estimator.tune_model(meta_model, search_algorithm = search_algorithm, 
+            optimize = evaluation_metric, search_library = search_library, n_iter = n_iter, custom_grid = custom_grid.get(meta_model)) 
+        stacking_ensemble = estimator.stack_models(tuned_top, optimize = evaluation_metric, meta_model = tuned_meta_model)
+
+    if "blending" in ensemble_methods:
+        blending_ensemble = estimator.blend_models(tuned_top, optimize = evaluation_metric, choose_better = True)
+
+    if "boosting" in ensemble_methods:
+        boosting_ensemble = estimator.ensemble_model(tuned_top[0], method = "Boosting", optimize = evaluation_metric, 
             choose_better = True, n_estimators = n_estimators)
-        for model in top_models 
-    ]
-    boosted_blending_ensemble = estimator.blend_models(boosted_top, optimize = evaluation_metric, choose_better = True)
+
+    if "bagging" in ensemble_methods:
+        bagging_ensemble = estimator.ensemble_model(tuned_top[0], method = "Bagging", optimize = evaluation_metric, 
+            choose_better = True, n_estimators = n_estimators)
+
+    if "blended_boosting" in ensemble_methods:
+        boosted_top = [ 
+            estimator.ensemble_model(model, method = "Boosting", optimize = evaluation_metric, 
+                choose_better = True, n_estimators = n_estimators)
+            for model in top_models 
+        ]
+        boosted_blending_ensemble = estimator.blend_models(boosted_top, optimize = evaluation_metric, choose_better = True)
 
     # Use AutoML to select best model in session
     best_model = estimator.automl(optimize = evaluation_metric)        
