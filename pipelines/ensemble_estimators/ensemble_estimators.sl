@@ -59,13 +59,15 @@ for ((i = 1; i <= worker_num; i++)); do
 done
 
 . ../../.env
+. ../../env_hook.sh
+
 export RAY_ADDRESS=$RAY_IP_HEAD
 export DISABLE_PLOTLY=1
 
 # Vars
 # Override using sbatch --export=base_dir=.,scenario=.,...,from_params=. tpot_automl.sl
 base_dir="${SIZING_DIR:-.}"
-scenario="${PIPELINE_SCENARIO:-.}"
+scenario="${ML_PIPELINE_SCENARIO:-.}"
 from_params="${CONFIG_FILE:-.}"
 
 python -u src/run.py --base_dir "${base_dir}" --scenario "${scenario}" --from_params "${from_params}"

@@ -2,6 +2,8 @@
 
 . ../../.env
 
+. ../../env_hook.sh
+
 # Launch a local MLFlow server instance
 
 echo "Host: ${MLFLOW_LOCAL_HOST}" 

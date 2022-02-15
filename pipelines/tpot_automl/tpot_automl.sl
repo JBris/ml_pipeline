@@ -13,11 +13,12 @@ module load Anaconda3/2019.03-gimkl-2018b
 conda activate /nesi/project/ptec03219/tpot_dask
 
 . ../../.env
+. ../../env_hook.sh
 
 # Vars
 # Override using sbatch --export=base_dir=.,scenario=.,...,from_params=. tpot_automl.sl
 base_dir="${SIZING_DIR:-.}"
-scenario="${PIPELINE_SCENARIO:-.}"
+scenario="${ML_PIPELINE_SCENARIO:-.}"
 from_params="${CONFIG_FILE:-.}"
 
 srun python src/run.py --base_dir "${base_dir}" --scenario "${scenario}" --from_params "${from_params}"

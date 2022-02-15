@@ -92,9 +92,9 @@ When [init.sh](init.sh) is first executed, it will create both a *.env* file fro
 
 There are several important environment variables:
 
-* ML_PIPELINE_DIR: The base directory for the ml-pipeline directory
+* PROJECT_DIR: The base directory for the ml-pipeline directory
 * SIZING_DIR: The base directory for the fruit sizing project
-* PIPELINE_SCENARIO: A scenario file from the scenario directory
+* ML_PIPELINE_SCENARIO: A scenario file from the scenario directory
 * CONFIG_FILE: A params.override.yaml configuration file
 
 ### Pipeline Library
@@ -135,7 +135,7 @@ Type `new.sh -h` for more information.
 
 Scenario files can be defined in the [scenarios](scenarios) directory. These contain pipeline yaml files that you may want to use in the future.
 
-Edit the *PIPELINE_SCENARIO* environment variable in .env to specify a particular scenario. You can also pass a scenario to a *run.py* script using the `--scenario` argument. When executing `mlflow run`, include a parameter override using `-P scenario=path/to/scenario`. 
+Edit the *ML_PIPELINE_SCENARIO* environment variable in .env to specify a particular scenario. You can also pass a scenario to a *run.py* script using the `--scenario` argument. When executing `mlflow run`, include a parameter override using `-P scenario=path/to/scenario`. 
 
 ### Templates
 

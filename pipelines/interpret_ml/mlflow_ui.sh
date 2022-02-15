@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 . ../../.env
+. ../../env_hook.sh
 
 # Launch a local MLFlow server instance
 

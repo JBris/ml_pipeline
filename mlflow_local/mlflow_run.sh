@@ -2,6 +2,8 @@
 
 . ../.env
 
+. ../env_hook.sh
+
 ###################################################################
 # Variables
 ###################################################################
@@ -55,7 +57,7 @@ while getopts "c:d:r:s:u" opt; do
             RAY_ADDRESS=${OPTARG}
             ;;
         s)
-            PIPELINE_SCENARIO="${OPTARG}"
+            ML_PIPELINE_SCENARIO="${OPTARG}"
             ;;
         u)
             MLFLOW_TRACKING_URI=${OPTARG}
@@ -77,6 +79,6 @@ echo "Ray address: ${RAY_ADDRESS}"
 # Parameter overrides
 [[ ! -z "${CONFIG_FILE}" ]] && add_param from_params "${CONFIG_FILE}"
 [[ ! -z "${SIZING_DIR}" ]] && add_param base_dir "${SIZING_DIR}"
-[[ ! -z "${PIPELINE_SCENARIO}" ]] && add_param scenario "${PIPELINE_SCENARIO}"
+[[ ! -z "${ML_PIPELINE_SCENARIO}" ]] && add_param scenario "${ML_PIPELINE_SCENARIO}"
 
 mlflow run ${MLFLOW_CONDA} ../pipelines/${1} -b ${MLFLOW_BACKEND} ${params}
