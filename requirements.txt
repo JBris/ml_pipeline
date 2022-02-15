@@ -10,4 +10,3 @@ interpret-core==0.2.7
 dask==2022.1.1
 dask-glm==0.2.0
 dask-ml==2022.1.22
-kaleido==0.2.1

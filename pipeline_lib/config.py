@@ -22,13 +22,17 @@ from pipeline_lib.data import join_path
 ### Library  
 ##########################################################################################################
 
+# White list for environment variables
+# Variables are filtered by prefix.
+ENV_VAR_WHITE_LIST = ["ML_PIPELINE_", "MLFLOW_", "RAY_"]
+
 class Config:
     """Pipeline configuration class"""
 
     def __init__(self):
         self.config = {}
         self.params_override = {} 
-        self.env_var_prefixes = ["MLFLOW_", "RAY_"]
+        self.env_var_prefixes = ENV_VAR_WHITE_LIST
 
     def get(self, k: str, export: bool = True) -> Any:
         """Get a configuration value."""
@@ -97,12 +101,13 @@ def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
     Get a new configuration object.
 
     Configuration Hierarchy:
-        1. params.global.yaml
-        2. The project's params.yaml
-        3. Arguments from parser 
-        4. The scenario file
-        5. params.local.yaml
-        6. An optional params.override.yaml file to replicate pipelines
+        1. White-listed environment variables (see ENV_VAR_WHITE_LIST)
+        2. params.global.yaml
+        3. The project's params.yaml
+        4. Arguments from parser 
+        5. The scenario file
+        6. params.local.yaml
+        7. An optional params.override.yaml file to replicate pipelines
 
     Parameters
     --------------
@@ -127,7 +132,9 @@ def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
 
     scenario = config.get("scenario")
     if scenario is not None:
-        config.from_yaml(f"{base_dir}/scenarios/{scenario}.yaml")
+        scenario_file = f"{base_dir}/scenarios/{scenario}.yaml"
+        if os.path.isfile(scenario_file):
+            config.from_yaml(scenario_file)
         config.set("scenario", scenario.replace("/", "_"))
 
     local_config = f"{base_dir}/params.local.yaml"
