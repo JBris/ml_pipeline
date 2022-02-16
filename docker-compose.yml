@@ -4,6 +4,7 @@ services:
   grafana:
     image: "grafana/grafana:${GRAFANA_TAG}"
     container_name: "${ML_PIPELINE_PROJECT_NAME}_grafana"
+    user: "472"
     hostname: grafana
     restart: always
     stop_grace_period: 60s
@@ -16,7 +17,18 @@ services:
       - influxdb
     volumes:
       - ./data/grafana:/var/lib/grafana
-     
+
+  portainer:
+    image: "portainer/portainer:${PORTAINER_TAG}"
+    container_name: "${ML_PIPELINE_PROJECT_NAME}_portainer"
+    command: --no-auth -H unix:///var/run/docker.sock
+    stop_grace_period: 60s
+    restart: always
+    ports:
+      - ${PORTAINER_PORT}:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
 networks:
   default:
       name: ml_pipeline
