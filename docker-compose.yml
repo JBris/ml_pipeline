@@ -1,0 +1,22 @@
+version: "3.5"
+
+services:
+  grafana:
+    image: "grafana/grafana:${GRAFANA_TAG}"
+    container_name: "${ML_PIPELINE_PROJECT_NAME}_grafana"
+    hostname: grafana
+    restart: always
+    stop_grace_period: 60s
+    user: "0"
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    environment:
+      GF_INSTALL_PLUGINS: $GF_INSTALL_PLUGINS
+    depends_on:
+      - influxdb
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+     
+networks:
+  default:
+      name: ml_pipeline
