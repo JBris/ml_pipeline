@@ -13,8 +13,6 @@ services:
       - "${GRAFANA_PORT}:3000"
     environment:
       GF_INSTALL_PLUGINS: $GF_INSTALL_PLUGINS
-    depends_on:
-      - influxdb
     volumes:
       - ./data/grafana:/var/lib/grafana
 
