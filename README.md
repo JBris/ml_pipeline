@@ -17,6 +17,7 @@
 * [Pipelines](#pipelines)<a name="pipelines"/>
 * [Scenarios](#scenarios)<a name="scenarios"/>
 * [Templates](#templates)<a name="templates"/>
+* [Docker](#docker)<a name="docker"/>
 
 ### Introduction
 
@@ -140,3 +141,13 @@ Edit the *ML_PIPELINE_SCENARIO* environment variable in .env to specify a partic
 ### Templates
 
 The [templates](templates) directory is used to store scaffolding files when initialising new projects. You can use these files to create a consistent scructure for each pipeline. This also minimises the amount of coding that is required when developing a pipeline - more time can be dedicated to developing the pipeline itself, and less time is required for constructing the MLproject file or configuration.
+
+### Docker
+
+The following Docker containers are currently supported by the pipeline framework:
+
+* Prometheus - For metrics logging. Note that MLFlow supports integration with Prometheus.
+* Grafana - For metrics visualisations.
+* Portainer - For Docker container management.
+
+Execute [docker_init.sh](docker_init.sh) to pull and launch the Docker containers. See [docker-compose.yml](docker-compose.yml) for the Docker service definitions.
