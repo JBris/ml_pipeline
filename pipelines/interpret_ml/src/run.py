@@ -21,7 +21,8 @@ from pipeline_lib.custom_estimators import CUSTOM_CLASSIFIERS, CUSTOM_REGRESSORS
 from pipeline_lib.config import Config, add_argument, get_config
 from pipeline_lib.data import Data, join_path
 from pipeline_lib.estimator import EstimatorTask, PyCaretClassifier, PyCaretRegressor, setup
-from pipeline_lib.pipelines import end_mlflow, init_mlflow, PlotParameters, save_local_results, save_mlflow_results, pipeline_plots
+from pipeline_lib.pipelines import (create_local_directory, end_mlflow, init_mlflow, PlotParameters, 
+    save_local_results, save_mlflow_results, pipeline_plots)
 
 ##########################################################################################################
 ### Parameters
@@ -44,7 +45,7 @@ PROJECT_NAME = "interpret_ml"
 CONFIG: Config = get_config(base_dir, parser)
 
 EXPERIMENT_NAME = f"{PROJECT_NAME}_{CONFIG.get('scenario')}"
-BASE_DIR = CONFIG.get("base_dir")
+BASE_DIR = config.get("base_dir", False)
 if BASE_DIR is None:
     raise Exception(f"Directory not defined error: {BASE_DIR}")
 
@@ -97,7 +98,7 @@ def main() -> None:
         tmp_dir = init_mlflow(CONFIG)
         save_dir = tmp_dir.name
     else:
-        save_dir = "data"
+        save_dir = create_local_directory(CONFIG)
 
     # Data split
     df = DATA.read_csv(FILE_NAME) 
@@ -170,7 +171,7 @@ def main() -> None:
         save_mlflow_results(CONFIG, ebm_model, EXPERIMENT_NAME, tmp_dir, assigned_df = coefficients_df)
         end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
     else:
-        save_local_results(CONFIG, ebm_model, EXPERIMENT_NAME, assigned_df = coefficients_df)
+        save_local_results(CONFIG, ebm_model, EXPERIMENT_NAME, assigned_df = coefficients_df, save_path = save_dir)
 
     if RUN_DISTRIBUTED:
         ray.shutdown()

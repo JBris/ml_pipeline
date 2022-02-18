@@ -16,7 +16,7 @@ from pipeline_lib.config import add_argument, get_config
 from pipeline_lib.data import Data, join_path
 from pipeline_lib.distributed import close_dask, init_dask
 from pipeline_lib.estimator import EstimatorTask
-from pipeline_lib.pipelines import end_mlflow, init_mlflow
+from pipeline_lib.pipelines import create_local_directory, end_mlflow, init_mlflow
 
 ##########################################################################################################
 ### Parameters
@@ -39,7 +39,7 @@ PROJECT_NAME = "tpot_automl"
 CONFIG = get_config(base_dir, parser)
 
 EXPERIMENT_NAME = f"{PROJECT_NAME}_{CONFIG.get('scenario')}"
-BASE_DIR = CONFIG.get("base_dir")
+BASE_DIR = config.get("base_dir", False)
 if BASE_DIR is None:
     raise Exception(f"Directory not defined error: {BASE_DIR}")
 
@@ -83,9 +83,10 @@ def main() -> None:
     X = df.drop(TARGET_VAR, axis = 1)
     y = df[TARGET_VAR].values
 
+    save_dir = create_local_directory(CONFIG)
     kwargs = {
         "cv" : CONFIG.get("fold"), "random_state" : RANDOM_STATE, "use_dask" : RUN_DISTRIBUTED, 
-        "verbosity" : 2, "warm_start" : False, "periodic_checkpoint_folder": "data"
+        "verbosity" : 2, "warm_start" : False, "periodic_checkpoint_folder": save_dir
     }
 
     for config_arg in ["generations", "population_size", "n_jobs", "max_time_mins", "max_eval_time_mins",
@@ -111,7 +112,7 @@ def main() -> None:
         mlflow.log_artifact(pipeline_file)
         end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
     else:
-        save_results(est, "data")
+        save_results(est, save_dir)
 
     if RUN_DISTRIBUTED:
         close_dask(client)

@@ -16,6 +16,8 @@ import mlflow
 import os
 import pandas as pd
 import tempfile
+import time
+import uuid
 
 from dataclasses import dataclass, field
 
@@ -67,17 +69,47 @@ def pipeline_plots(plot_params: PlotParameters, default_model: sklearn.base.Base
         if log_artifact:
             mlflow.log_artifact(join_path(save, model_plot))
 
+def create_local_directory(config: Config) -> str:
+    """
+    Create a local directory to save pipeline results.
+
+    Parameters
+    --------------
+    config: Config
+        The pipeline configuration object.
+
+    Returns
+    ---------
+    full_dir: str
+        The full local directory path.
+    """
+    current_time = time.strftime("%Y-%m-%d-%H_%M", time.gmtime())
+    dir_id = str(uuid.uuid1())
+    local_dir_name = f"{current_time}_{dir_id}"
+    # Add optional prefix
+    local_data_prefix = config.get("local_data_prefix")
+    if local_data_prefix is not None:
+        local_dir_name = f"{local_data_prefix}-{local_dir_name}"
+
+    full_dir = join_path("data", local_dir_name)
+    os.makedirs(full_dir, exist_ok = True)
+    return full_dir
+    
 def save_local_results(config: Config, model, experiment_name: str, assigned_df: pd.DataFrame = None,
-    plot_params: PlotParameters = None) -> None:
+    plot_params: PlotParameters = None, save_path: str = None) -> None:
     """Save pipeline results to the local data directory."""
-    save_local_model(model, experiment_name)
-    config.export("data")
+    if save_path is None:
+        save_path = create_local_directory(config)
+    save_local_model(model, experiment_name, path = save_path)
+    config.export(save_path)
 
     if assigned_df is not None:
-        assigned_df.to_csv(join_path("data", f"{experiment_name}.csv"))
+        assigned_df.to_csv(join_path(save_path, f"{experiment_name}.csv"))
 
     if plot_params is not None:
-        pipeline_plots(plot_params, model, "data")
+        pipeline_plots(plot_params, model, save = save_path)
+
+    return save_path
 
 def save_mlflow_results(config: Config, model, experiment_name: str, tmp_dir: tempfile.TemporaryDirectory, 
     assigned_df: pd.DataFrame = None, plot_params: PlotParameters = None) -> None:

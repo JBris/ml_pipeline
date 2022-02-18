@@ -43,7 +43,7 @@ PROJECT_NAME = "ensemble_estimators"
 CONFIG: Config = get_config(base_dir, parser)
 
 EXPERIMENT_NAME = f"{PROJECT_NAME}_{CONFIG.get('scenario')}"
-BASE_DIR = CONFIG.get("base_dir")
+BASE_DIR = config.get("base_dir", False)
 if BASE_DIR is None:
     raise Exception(f"Directory not defined error: {BASE_DIR}")
 
@@ -132,9 +132,9 @@ def main() -> None:
         save_mlflow_results(CONFIG, final_ensemble, EXPERIMENT_NAME, tmp_dir, plot_params = plot_params)
         end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
     else:
-        save_local_results(CONFIG, final_ensemble, EXPERIMENT_NAME, plot_params = plot_params)
+        save_path = save_local_results(CONFIG, final_ensemble, EXPERIMENT_NAME, plot_params = plot_params)
         if len(metrics.keys()) > 0:
-            pd.DataFrame(metrics, index = [0]).to_csv(join_path("data", f"{EXPERIMENT_NAME}_metrics.csv")) 
+            pd.DataFrame(metrics, index = [0]).to_csv(join_path(save_path, f"{EXPERIMENT_NAME}_metrics.csv")) 
 
     if RUN_DISTRIBUTED:
         ray.shutdown()

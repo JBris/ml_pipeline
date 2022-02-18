@@ -142,9 +142,9 @@ def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
         config.from_yaml(local_config)
     
     if config.get("from_params") != ".":
-        sizing_dir = config.get("base_dir")
+        sizing_dir = config.get("base_dir", False)
         config.from_yaml(config.get("from_params"))
-        config.set("base_dir", sizing_dir)
+        config.set("base_dir", sizing_dir, False)
         
     return config
 

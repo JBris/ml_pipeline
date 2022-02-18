@@ -5,6 +5,7 @@
 # External
 import argparse
 import os, sys
+import pandas as pd
 
 from pycaret.utils import check_metric
 
@@ -15,7 +16,7 @@ sys.path.insert(0, os.path.abspath(base_dir))
 from pipeline_lib.config import Config, add_argument, get_config
 from pipeline_lib.data import Data, join_path
 from pipeline_lib.estimator import EstimatorTask, PyCaretClassifier, PyCaretRegressor, setup, unsupervised_setup
-from pipeline_lib.pipelines import end_mlflow, init_mlflow, PlotParameters, pipeline_plots
+from pipeline_lib.pipelines import create_local_directory, end_mlflow, init_mlflow, PlotParameters, pipeline_plots
 
 ##########################################################################################################
 ### Parameters
@@ -38,7 +39,7 @@ PROJECT_NAME = "predict"
 CONFIG: Config = get_config(base_dir, parser)
 
 EXPERIMENT_NAME = f"{PROJECT_NAME}_{CONFIG.get('scenario')}"
-BASE_DIR = CONFIG.get("base_dir")
+BASE_DIR = config.get("base_dir", False)
 if BASE_DIR is None:
     raise Exception(f"Directory not defined error: {BASE_DIR}")
 
@@ -119,8 +120,8 @@ def main() -> None:
             model_uri = model_uri
         )
     else:
-         model = load_model(MODEL_PATH)
-         save_dir = "data"
+        model = load_model(MODEL_PATH)
+        save_dir = create_local_directory(CONFIG)
 
     # Perform predictions
     predictions = predict_model(model, df)
@@ -154,9 +155,9 @@ def main() -> None:
         mlflow.set_tag("est_task", EST_TASK)
         end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
     else:
-        CONFIG.export("data")
+        CONFIG.export(save_dir)
         if len(metrics.keys()) > 0:
-            pd.DataFrame(metrics, index = [0]).to_csv(join_path("data", f"{EXPERIMENT_NAME}_metrics.csv")) 
+            pd.DataFrame(metrics, index = [0]).to_csv(join_path(save_dir, f"{EXPERIMENT_NAME}_metrics.csv")) 
         
 if __name__ == "__main__":
     main()
