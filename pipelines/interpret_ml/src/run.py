@@ -8,9 +8,6 @@ import numpy as np
 import os, sys
 import pandas as pd
 
-if "DISABLE_PLOTLY" in os.environ:
-    sys.modules['plotly.express'] = {}
-
 from pycaret.utils import check_metric
 
 base_dir = "../.."

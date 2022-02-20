@@ -62,12 +62,14 @@ done
 . ../../env_hook.sh
 
 export RAY_ADDRESS=RAY_IP_HEAD
-export DISABLE_PLOTLY=1
 
 # Vars
 # Override using sbatch --export=base_dir=.,scenario=.,...,from_params=. tpot_automl.sl
 base_dir="${SIZING_DIR:-.}"
 scenario="${ML_PIPELINE_SCENARIO:-.}"
 from_params="${CONFIG_FILE:-.}"
+
+# To import Plotly Express on NeSI, we must unset I_MPI_PMI_LIBRARY
+unset I_MPI_PMI_LIBRARY
 
 python -u src/run.py --base_dir "${base_dir}" --scenario "${scenario}" --from_params "${from_params}"

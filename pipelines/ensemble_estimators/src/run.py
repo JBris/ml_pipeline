@@ -8,9 +8,6 @@ import os, sys
 from typing import Callable, List
 import pandas as pd
 
-if "DISABLE_PLOTLY" in os.environ:
-    sys.modules['plotly.express'] = {}
-
 from pycaret.utils import check_metric
 
 base_dir = "../.."
