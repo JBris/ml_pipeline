@@ -39,7 +39,7 @@ PROJECT_NAME = "predict"
 CONFIG: Config = get_config(base_dir, parser)
 
 EXPERIMENT_NAME = f"{PROJECT_NAME}_{CONFIG.get('scenario')}"
-BASE_DIR = config.get("base_dir", False)
+BASE_DIR = CONFIG.get("base_dir", False)
 if BASE_DIR is None:
     raise Exception(f"Directory not defined error: {BASE_DIR}")
 
