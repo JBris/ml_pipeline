@@ -2,22 +2,22 @@
 
 ## Table of Contents  
 
-* [Introduction](#introduction)<a name="introduction"/>
-* [Dependencies](#dependencies)<a name="dependencies"/>
-* [DVC](#dvc)<a name="dvc"/>
-* [MLFlow](#mlflow)<a name="mlflow"/>
-* [Ray](#ray)<a name="ray"/>
-* [PyCaret](#pycaret)<a name="pycaret"/>
-* [Optuna](#optuna)<a name="optuna"/>
-* [TPOT](#tpot)<a name="tpot"/>
-* [InterpretML](#interpretml)<a name="interpretml"/>
-* [Environment](#environment)<a name="environment"/>
-* [Pipeline Library](#pipeline-library)<a name="pipeline-library"/>
-* [Configuration](#configuration)<a name="configuration"/>
-* [Pipelines](#pipelines)<a name="pipelines"/>
-* [Scenarios](#scenarios)<a name="scenarios"/>
-* [Templates](#templates)<a name="templates"/>
-* [Docker](#docker)<a name="docker"/>
+* [Introduction](#introduction) 
+* [Dependencies](#dependencies) 
+* [DVC](#dvc) 
+* [MLFlow](#mlflow) 
+* [Ray](#ray) 
+* [PyCaret](#pycaret) 
+* [Optuna](#optuna) 
+* [TPOT](#tpot) 
+* [InterpretML](#interpretml) 
+* [Environment](#environment) 
+* [Pipeline Library](#pipeline-library) 
+* [Configuration](#configuration) 
+* [Pipelines](#pipelines) 
+* [Scenarios](#scenarios) 
+* [Templates](#templates) 
+* [Docker](#docker) 
 
 ### Introduction
 
