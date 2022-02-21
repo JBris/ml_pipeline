@@ -2,9 +2,9 @@
 
 ## Table of Contents  
 
-* [Introduction](#introduction)<a name="introduction"/>
-* [Models](#models)<a name="models"/>
-* [Parameters](#parameters)<a name="parameters"/>
+* [Introduction](#introduction)
+* [Models](#models)
+* [Parameters](#parameters)
 
 ### Introduction
 

@@ -2,7 +2,7 @@
 
 ## Table of Contents  
 
-* [Introduction](#introduction)<a name="introduction"/>
+* [Introduction](#introduction)
 * [DVC](#dvc)<a name="dvc"/>
 
 ### Introduction

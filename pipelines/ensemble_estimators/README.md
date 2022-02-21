@@ -2,10 +2,10 @@
 
 ## Table of Contents  
 
-* [Introduction](#introduction)<a name="introduction"/>
-* [Models](#models)<a name="models"/>
-* [Parameters](#parameters)<a name="parameters"/>
-* [SLURM](#slurm)<a name="slurm"/>
+* [Introduction](#introduction)
+* [Models](#models)
+* [Parameters](#parameters)
+* [SLURM](#slurm)
 
 ### Introduction
 
