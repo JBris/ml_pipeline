@@ -90,7 +90,7 @@ def main() -> None:
     plot_params = PlotParameters(plot_model, CONFIG.get("label_feature"), [CONFIG.get("clustering_plot")])
     if USE_MLFLOW:
         save_mlflow_results(CONFIG, model, EXPERIMENT_NAME, tmp_dir, assigned_df, plot_params)        
-        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
+        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir, CONFIG.get("author"))
     else:
         save_local_results(CONFIG, model, EXPERIMENT_NAME, assigned_df, plot_params)
 

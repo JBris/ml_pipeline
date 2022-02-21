@@ -127,7 +127,7 @@ def main() -> None:
     plot_params = PlotParameters(ESTIMATOR.plot_model, plots = ["residuals", "error"], model = best_model)
     if USE_MLFLOW:
         save_mlflow_results(CONFIG, final_ensemble, EXPERIMENT_NAME, tmp_dir, plot_params = plot_params)
-        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
+        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir, CONFIG.get("author"))
     else:
         save_path = save_local_results(CONFIG, final_ensemble, EXPERIMENT_NAME, plot_params = plot_params)
         if len(metrics.keys()) > 0:

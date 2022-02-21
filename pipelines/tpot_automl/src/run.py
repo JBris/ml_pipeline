@@ -110,7 +110,7 @@ def main() -> None:
         config_file, pipeline_file = save_results(est, tmp_dir.name)
         mlflow.log_artifact(config_file)
         mlflow.log_artifact(pipeline_file)
-        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
+        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir, CONFIG.get("author"))
     else:
         save_results(est, save_dir)
 

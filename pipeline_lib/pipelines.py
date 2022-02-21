@@ -37,10 +37,12 @@ def init_mlflow(config: Config) -> tempfile.TemporaryDirectory:
     tmp_dir = tempfile.TemporaryDirectory()
     return tmp_dir
 
-def end_mlflow(project_name: str, experiment_name: str, tmp_dir: tempfile.TemporaryDirectory) -> None:
+def end_mlflow(project_name: str, experiment_name: str, tmp_dir: tempfile.TemporaryDirectory, author: str = None) -> None:
     """End the MLFlow run."""
     mlflow.set_tag("project", project_name)
     mlflow.set_tag("experiment", experiment_name)
+    if author is not None:
+        mlflow.set_tag("author", author)
     mlflow.end_run()
     tmp_dir.cleanup()
 
@@ -111,14 +113,30 @@ def save_local_results(config: Config, model, experiment_name: str, assigned_df:
 
     return save_path
 
+def save_mlflow_model(config: Config, model, experiment_name: str) -> None:
+    """Save the model to the MLFlow model registry."""
+    model_info = mlflow.sklearn.log_model(model, artifact_path = experiment_name)
+    run_id = mlflow.active_run().info.run_id
+    model_uri = f"runs:/{run_id}/{experiment_name}" 
+    model_version = mlflow.register_model(model_uri, experiment_name)
+
+    model_description = config.get("model_description")
+    if model_description is not None:
+        author = config.get("author")
+        if author is not None:
+            model_description += f" - {author}"
+        client = mlflow.tracking.MlflowClient()
+        client.update_model_version(experiment_name, model_version.version, model_description)
+
 def save_mlflow_results(config: Config, model, experiment_name: str, tmp_dir: tempfile.TemporaryDirectory, 
     assigned_df: pd.DataFrame = None, plot_params: PlotParameters = None) -> None:
     """Save pipeline results to the MLFlow server."""
     
     config_path = config.export(tmp_dir.name)
     mlflow.log_artifact(config_path)
-
-    mlflow.sklearn.log_model(model, experiment_name, registered_model_name = experiment_name)
+    
+    # Saving model to MLFlow registry
+    save_mlflow_model(config, model, experiment_name)
 
     if assigned_df is not None:
         df_path = join_path(tmp_dir.name, f"{experiment_name}.csv")

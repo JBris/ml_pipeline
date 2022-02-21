@@ -153,7 +153,7 @@ def main() -> None:
         mlflow.log_artifact(config_path)
         mlflow.log_artifact(df_path)
         mlflow.set_tag("est_task", EST_TASK)
-        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
+        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir, CONFIG.get("author"))
     else:
         CONFIG.export(save_dir)
         if len(metrics.keys()) > 0:

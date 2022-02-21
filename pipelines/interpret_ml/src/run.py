@@ -166,7 +166,7 @@ def main() -> None:
         for model in LINEAR_MODELS + [TREE_MODEL, EBM_KEY]:
             mlflow.log_artifact(join_path(save_dir, model))
         save_mlflow_results(CONFIG, ebm_model, EXPERIMENT_NAME, tmp_dir, assigned_df = coefficients_df)
-        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
+        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir, CONFIG.get("author"))
     else:
         save_local_results(CONFIG, ebm_model, EXPERIMENT_NAME, assigned_df = coefficients_df, save_path = save_dir)
 

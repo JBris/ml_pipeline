@@ -64,7 +64,7 @@ def main() -> None:
     print(f"Created example.txt" )
 
     if USE_MLFLOW:
-        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir)
+        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir, CONFIG.get("author"))
         
 if __name__ == "__main__":
     main()
