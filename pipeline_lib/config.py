@@ -17,6 +17,7 @@ from typing import Any
 
 # Internal
 from pipeline_lib.data import join_path
+from pipeline_lib.tuning import GridTransformer
 
 ##########################################################################################################
 ### Library  
@@ -95,6 +96,16 @@ class Config:
         for k, v in options.items():
             self.config[k] = v
         return self
+
+    def get_custom_grid(self, search_algorithm: str, search_library: str):
+        """Transform a custom grid configuration into the appropriate format."""
+        custom_grid_config = self.get("custom_grid")
+        if custom_grid_config is None:
+            return {}
+
+        transformer = GridTransformer(search_algorithm, search_library)
+        custom_grid = transformer.transform(custom_grid_config)
+        return custom_grid
     
 def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
     """

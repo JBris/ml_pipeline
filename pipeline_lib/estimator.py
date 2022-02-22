@@ -239,7 +239,8 @@ def add_custom_estimators(estimator: PyCaretEstimatorBase, config: Config, searc
     if len(custom_estimators) == 0:
         return tuned_top
 
-    for k, v in config.get("custom_grid").items():
+    custom_grid = config.get_custom_grid(search_algorithm, search_library) 
+    for k, v in custom_grid.items():
         custom_grid[k] = v
 
     model_list = []
@@ -266,7 +267,7 @@ def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, s
     evaluation_metric = config.get("evaluation_metric")
     n_estimators = config.get("n_estimators")
     n_iter = config.get("n_iter")
-    custom_grid = config.get("custom_grid")
+    custom_grid = config.get_custom_grid(search_algorithm, search_library) 
     ensemble_methods = set(config.get("ensemble_methods"))
 
     # Train and tune estimators
@@ -285,7 +286,7 @@ def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, s
     ]
 
     tuned_top = add_custom_estimators(estimator, config, search_algorithm, search_library, tuned_top)
-
+    
     # Train ensemble estimators
     if "stacking" in ensemble_methods:
         meta_model = estimator.create_model(config.get("meta_model"))
