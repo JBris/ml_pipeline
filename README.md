@@ -55,7 +55,7 @@ MLFlow is a machine learning platform for experiment tracking, model versioning,
 
 [More information can be found at https://mlflow.org/](https://mlflow.org/).
 
-A local instance of MLFlow can be launched using [mlflow_ui.sh](mlflow_local/mlflow_ui.sh). MLFlow project pipelines can be executed by running the [mlflow_run.sh](mlflow_local/mlflow_run.sh) script. Enter `mlflow_run.sh -h` for more information.
+A local production-ready instance of MLFlow can be launched using [mlflow_server.sh](mlflow_local/mlflow_server.sh). MLFlow project pipelines can be executed by running the [mlflow_run.sh](mlflow_local/mlflow_run.sh) script. Enter `mlflow_run.sh -h` for more information.
 
 ### Ray
 
