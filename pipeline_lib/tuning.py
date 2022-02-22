@@ -88,7 +88,7 @@ def get_ray_tune_search_distributions():
     }
     return search_map
 
- def to_ray_tune_grid(grid_config: dict):
+def to_ray_tune_grid(grid_config: dict):
     """
     Perform hyperparameter tuning using Ray Tune.
 
