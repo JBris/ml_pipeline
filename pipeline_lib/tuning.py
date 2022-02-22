@@ -62,7 +62,6 @@ def to_random_search(grid_config: dict) -> dict:
         The random search grid.
     """
     grid = {}
-
     distributions = get_random_search_distributions()
 
     for model, params in grid_config.items():
@@ -79,7 +78,17 @@ def to_random_search(grid_config: dict) -> dict:
 
     return grid
 
-def to_ray_tune_grid(grid_config: dict):
+def get_ray_tune_search_distributions():
+    from ray.tune import choice, uniform, quniform, loguniform
+    search_map = {
+        "choice": choice,
+        "uniform": uniform,
+        "quniform": quniform,
+        "loguniform": loguniform
+    }
+    return search_map
+
+ def to_ray_tune_grid(grid_config: dict):
     """
     Perform hyperparameter tuning using Ray Tune.
 
@@ -94,13 +103,20 @@ def to_ray_tune_grid(grid_config: dict):
         The Ray Tune grid.
     """
     grid = {}
+    distributions = get_ray_tune_search_distributions()
 
     for model, params in grid_config.items():
         grid[model] = {}
         for param, values in params.items():
-            grid[model][param] = values["value"]
+            if "distribution" in values and "kwargs" in values:
+                distribution_key = values["distribution"]
+                distribution = distributions.get(distribution_key)
+                if distribution is None:
+                    raise Exception(f"Error: Invalid distribution passed to Ray Tune grid - {distribution_key}")
+                grid[model][param] = distribution(**values["kwargs"])
+            else:
+                grid[model][param] = values["value"]
 
-    print(grid)
     return grid
 
 GRID_TRANSFORMERS = {
