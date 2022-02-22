@@ -61,4 +61,25 @@ class Data:
         data.reset_index(drop = True, inplace = True)
         data_unseen.reset_index(drop = True, inplace = True)
         return data, data_unseen
+
+    def query(self, config, df: pd.DataFrame):
+        """
+        Wrapper method for performing dataframe queries.
+
+        Parameters
+        --------------
+        config: Config
+            The configuration object.
+        df: DataFrame
+            The dataframe.
+
+        Returns
+        ---------
+        df: DataFrame
+            The queried dataframe.
+        """
+        df_query = config.get("df_query")
+        if df_query is None:
+            return df
+        return df.query(df_query).reset_index()
         

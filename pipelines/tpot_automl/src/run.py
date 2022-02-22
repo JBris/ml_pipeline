@@ -80,6 +80,7 @@ def main() -> None:
         client = init_dask()
         
     df = DATA.read_csv(FILE_NAME)
+    df = DATA.query(CONFIG, df)
     X = df.drop(TARGET_VAR, axis = 1)
     y = df[TARGET_VAR].values
 

@@ -104,6 +104,7 @@ def main() -> None:
 
     # Data split
     df = DATA.read_csv(FILE_NAME)
+    df = DATA.query(CONFIG, df)
     data, data_unseen = DATA.train_test_split(df, frac = CONFIG.get("training_frac"), random_state = RANDOM_STATE)
 
     # Data preprocessing

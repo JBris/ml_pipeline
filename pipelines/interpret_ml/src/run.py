@@ -99,7 +99,7 @@ def main() -> None:
 
     # Data split
     df = DATA.read_csv(FILE_NAME) 
-
+    df = DATA.query(CONFIG, df)
     # Data preprocessing
     est_setup = setup(ESTIMATOR, CONFIG, df, EXPERIMENT_NAME)
 

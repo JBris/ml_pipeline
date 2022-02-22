@@ -75,6 +75,7 @@ def main() -> None:
 
     # Data split
     df = DATA.read_csv(FILE_NAME)
+    df = DATA.query(CONFIG, df)
     # Data preprocessing
     est_setup = unsupervised_setup(CONFIG, df, EXPERIMENT_NAME, EstimatorTask.ANOMALY_DETECTION.value)
     # Estimator fitting

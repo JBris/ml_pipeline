@@ -91,7 +91,7 @@ def _save_metrics(log_metric, metrics, preds):
 def main() -> None:
     # Load data
     df = DATA.read_csv(FILE_NAME) 
-    
+    df = DATA.query(CONFIG, df)
     # Setup
     CONFIG.set("use_mlflow", False) # Skip MLFlow logging
     if EST_TASK == EstimatorTask.REGRESSION.value or EST_TASK == EstimatorTask.CLASSIFICATION.value:
