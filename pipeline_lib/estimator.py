@@ -268,7 +268,7 @@ def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, s
     n_estimators = config.get("n_estimators")
     n_iter = config.get("n_iter")
     custom_grid = config.get_custom_grid(search_algorithm, search_library) 
-    ensemble_methods = set(config.get("ensemble_methods"))
+    ensemble_methods = config.get_as("ensemble_methods", set)
 
     # Train and tune estimators
     top_models = estimator.compare_models(include = config.get("include_estimators"), n_select = config.get("n_select"), 
@@ -312,6 +312,14 @@ def train_ensemble_estimators(estimator: PyCaretEstimatorBase, config: Config, s
             for model in top_models 
         ]
         boosted_blending_ensemble = estimator.blend_models(boosted_top, optimize = evaluation_metric, choose_better = True)
+
+    if "blended_bagging" in ensemble_methods:
+        bagging_top = [ 
+            estimator.ensemble_model(model, method = "Bagging", optimize = evaluation_metric, 
+                choose_better = True, n_estimators = n_estimators)
+            for model in top_models 
+        ]
+        bagging_blending_ensemble = estimator.blend_models(bagging_top, optimize = evaluation_metric, choose_better = True)
 
     # Use AutoML to select best model in session
     best_model = estimator.automl(optimize = evaluation_metric)        

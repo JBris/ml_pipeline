@@ -30,6 +30,29 @@ from pipeline_lib.estimator import save_local_model
 ### Library  
 ##########################################################################################################
 
+def get_experiment_name(project_name: str, config: Config) -> str:
+    """
+    Get the name of the experiment.
+
+    Parameters
+    --------------
+    project_name: str
+        The name of the project.
+    config: Config
+        The pipeline configuration object.
+
+    Returns
+    ---------
+    experiment_name: str
+        The name of the experiment.
+    """
+    scenario = config.get('scenario')
+    if scenario is None or scenario == ".":
+        scenario = "experiment"
+
+    experiment_name = f"{project_name}_{scenario}"
+    return experiment_name
+
 def init_mlflow(config: Config) -> tempfile.TemporaryDirectory:
     """Initialise the MLFlow run."""
     mlflow.set_tracking_uri(config.get("MLFLOW_TRACKING_URI")) # Enable tracking using MLFlow

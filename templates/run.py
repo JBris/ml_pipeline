@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath(base_dir))
 
 # Internal 
 from pipeline_lib.config import add_argument, get_config
-from pipeline_lib.pipelines import end_mlflow, init_mlflow
+from pipeline_lib.pipelines import end_mlflow, get_experiment_name, init_mlflow
 
 ##########################################################################################################
 ### Parameters
@@ -35,7 +35,7 @@ add_argument(parser, "--from_params", ".", "Override parameters using a params.o
 PROJECT_NAME = "$name"
 CONFIG = get_config(base_dir, parser)
 
-EXPERIMENT_NAME = f"{PROJECT_NAME}_{CONFIG.get('scenario')}"
+EXPERIMENT_NAME = get_experiment_name(PROJECT_NAME, CONFIG)
 BASE_DIR = CONFIG.get("base_dir", False)
 if BASE_DIR is None:
     raise Exception(f"Directory not defined error: {BASE_DIR}")

@@ -12,6 +12,7 @@ A library for data loading and manipulation within the machine learning pipeline
 import os
 import pandas as pd
 
+
 ##########################################################################################################
 ### Library  
 ##########################################################################################################
@@ -62,7 +63,33 @@ class Data:
         data_unseen.reset_index(drop = True, inplace = True)
         return data, data_unseen
 
-    def query(self, config, df: pd.DataFrame):
+    def get_filename(self, config) -> str:
+        """
+        Return the file name for the input data.
+
+        Parameters
+        --------------
+        config: Config
+            The configuration object.
+
+        Returns
+        ---------
+        file_name: str
+            The file name for the input data.
+        """
+        base_dir = config.get("base_dir", False)
+        file_path = config.get("file_path")
+
+        if base_dir is None:
+            raise Exception(f"Directory not defined error: {base_dir}")
+            
+        if file_path is None:
+            raise Exception(f"File path not defined error: {file_path}")
+
+        file_name = join_path(base_dir, file_path)
+        return file_name
+
+    def query(self, config, df: pd.DataFrame) -> pd.DataFrame:
         """
         Wrapper method for performing dataframe queries.
 

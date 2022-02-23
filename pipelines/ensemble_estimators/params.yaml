@@ -1,5 +1,5 @@
 evaluation_metric: MSE
-ensemble_methods: ["stacking", "blending", "boosting", "bagging", "blended_boosting"]
+ensemble_methods: ["stacking", "blending", "boosting", "bagging", "blended_boosting", "blended_bagging"]
 fold_groups: null
 meta_model: dt
 n_select: 5

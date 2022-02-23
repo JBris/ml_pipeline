@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath(base_dir))
 from pipeline_lib.config import Config, add_argument, get_config
 from pipeline_lib.data import Data, join_path
 from pipeline_lib.estimator import EstimatorTask, PyCaretClassifier, PyCaretRegressor, setup, train_ensemble_estimators
-from pipeline_lib.pipelines import end_mlflow, init_mlflow, PlotParameters, save_local_results, save_mlflow_results
+from pipeline_lib.pipelines import end_mlflow, get_experiment_name, init_mlflow, PlotParameters, save_local_results, save_mlflow_results
 
 ##########################################################################################################
 ### Parameters
@@ -38,15 +38,11 @@ add_argument(parser, "--from_params", ".", "Override parameters using a params.o
 # Config
 PROJECT_NAME = "ensemble_estimators"
 CONFIG: Config = get_config(base_dir, parser)
-
-EXPERIMENT_NAME = f"{PROJECT_NAME}_{CONFIG.get('scenario')}"
-BASE_DIR = CONFIG.get("base_dir", False)
-if BASE_DIR is None:
-    raise Exception(f"Directory not defined error: {BASE_DIR}")
+EXPERIMENT_NAME = get_experiment_name(PROJECT_NAME, CONFIG)
 
 # Data
 DATA = Data()
-FILE_NAME = join_path(BASE_DIR, CONFIG.get("file_path"))
+FILE_NAME = DATA.get_filename(CONFIG)
 TARGET_VAR = CONFIG.get("target")
 
 # Estimator
