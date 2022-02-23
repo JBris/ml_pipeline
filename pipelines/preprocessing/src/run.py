@@ -98,6 +98,7 @@ def main() -> None:
     # Perform query
     df = DATA.query(CONFIG, df)
 
+    copy_data_path = CONFIG.get("copy_data_path")
     if USE_MLFLOW:
         config_file, data_file = save_results(df, save_dir)
         mlflow.log_artifact(config_file)
@@ -106,7 +107,6 @@ def main() -> None:
     else:
         config_file, data_file = save_results(df, save_dir)
 
-    copy_data_path = CONFIG.get("copy_data_path")
     if copy_data_path is not None:
         shutil.copy2(data_file, copy_data_path)
 
