@@ -3,25 +3,26 @@ version: "3.5"
 services:
 
   prometheus:
-    image: prom/prometheus:v2.1.0
+    image: "prom/prometheus:${PROMETHEUS_TAG}"
     volumes:
-      - ./prometheus/:/etc/prometheus/
+      - ./services/prometheus/:/etc/prometheus/
       - ./data/prometheus:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--config.file=/etc/prometheus/prometheus.yaml'
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
     ports:
-      - 9090:9090
+      - ${PROMETHEUS_PORT}:9090
     links:
       - portainer:portainer
     depends_on:
       - portainer
     restart: always
+    stop_grace_period: 60s
 
   node-exporter:
-    image: prom/node-exporter
+    image: "prom/node-exporter:${PROMETHEUS_NODE_EXPORTER_TAG}"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -32,27 +33,30 @@ services:
       - --collector.filesystem.ignored-mount-points
       - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
     ports:
-      - 9100:9100
+      - ${PROMETHEUS_NODE_EXPORTER_PORT}:9100
     restart: always
+    stop_grace_period: 60s
 
   alertmanager:
-    image: prom/alertmanager
+    image: "prom/alertmanager:${PROMETHEUS_ALERT_MANAGER_TAG}"
     ports:
-      - 9093:9093
+      - ${PROMETHEUS_ALERT_MANAGER_PORT}:9093
     volumes:
       - ./data/alertmanager/:/etc/alertmanager/
+      - ./services/alertmanager/config.yaml:/etc/alertmanager/config.yaml
     restart: always
+    stop_grace_period: 60s
     command:
+      - '--config.file=/etc/alertmanager/config.yaml'
       - '--storage.path=/alertmanager'
 
   grafana:
     image: "grafana/grafana:${GRAFANA_TAG}"
     container_name: "${ML_PIPELINE_PROJECT_NAME}_grafana"
-    user: "472"
+    user: "0"
     hostname: grafana
     restart: always
     stop_grace_period: 60s
-    user: "0"
     links:
       - prometheus:prometheus
     depends_on:
@@ -74,6 +78,30 @@ services:
       - ${PORTAINER_PORT}:9000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+
+  postgres:
+    image: "postgres:${POSTGRES_TAG}"
+    container_name: "${ML_PIPELINE_PROJECT_NAME}_postgres"
+    hostname: postgres
+    restart: always
+    stop_grace_period: 60s
+    environment:
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_DB: $DB_NAME
+      POSTGRES_USER: $DB_USER
+    ports:
+      - ${DB_PORT}:5432
+    volumes:
+      - /var/lib/postgresql/data
+      - ./data/postgres:/var/data
+
+  adminer:
+    image: "adminer:${ADMINER_TAG}"
+    container_name: "${ML_PIPELINE_PROJECT_NAME}_adminer"
+    stop_grace_period: 60s
+    restart: always
+    ports:
+      - ${ADMINER_PORT}:8080
 
 networks:
   default:
