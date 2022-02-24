@@ -16,8 +16,10 @@ services:
     ports:
       - ${PROMETHEUS_PORT}:9090
     links:
+      - cadvisor:cadvisor
       - portainer:portainer
     depends_on:
+      - cadvisor
       - portainer
     restart: always
     stop_grace_period: 60s
@@ -52,6 +54,18 @@ services:
     command:
       - '--config.file=/etc/alertmanager/config.yaml'
       - '--storage.path=/alertmanager'
+
+  cadvisor:
+    image: "gcr.io/cadvisor/cadvisor:${PROMETHEUS_CADVISOR_TAG}"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - ${PROMETHEUS_CADVISOR_PORT}:8080
+    stop_grace_period: 60s
+    restart: always
 
   grafana:
     image: "grafana/grafana:${GRAFANA_TAG}"
