@@ -77,7 +77,11 @@ def main() -> None:
         
     df = DATA.read_csv(FILE_NAME)
     df = DATA.query(CONFIG, df)
-    X = df.drop(TARGET_VAR, axis = 1)
+    columns = [TARGET_VAR]
+    ignore_features = CONFIG.get("ignore_features")
+    if type(ignore_features) is list:
+        columns += ignore_features
+    X = df.drop(columns = columns)
     y = df[TARGET_VAR].values
 
     save_dir = create_local_directory(CONFIG)
