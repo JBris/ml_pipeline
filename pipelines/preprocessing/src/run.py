@@ -53,7 +53,7 @@ USE_MLFLOW = CONFIG.get("use_mlflow")
 ### Pipeline
 ##########################################################################################################
 
-def save_results(df: pd.DataFrame, path_prefix: str):
+def save_results(df: pd.DataFrame, path_prefix: str, copy_data_path: str):
     """Save preprocessing results."""
     config_file = CONFIG.export(path_prefix)
     preprocessed_fname = CONFIG.get("preprocessed_file_name")
@@ -62,6 +62,9 @@ def save_results(df: pd.DataFrame, path_prefix: str):
 
     data_file = join_path(path_prefix, preprocessed_fname)
     df.to_csv(data_file, index = False)
+    if copy_data_path is not None:
+        shutil.copy2(data_file, copy_data_path)
+
     return config_file, data_file
 
 def main() -> None:
@@ -100,15 +103,12 @@ def main() -> None:
 
     copy_data_path = CONFIG.get("copy_data_path")
     if USE_MLFLOW:
-        config_file, data_file = save_results(df, save_dir)
+        config_file, data_file = save_results(df, save_dir, copy_data_path)
         mlflow.log_artifact(config_file)
         mlflow.log_artifact(data_file)
         end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir, CONFIG.get("author"))
     else:
-        config_file, data_file = save_results(df, save_dir)
-
-    if copy_data_path is not None:
-        shutil.copy2(data_file, copy_data_path)
+        config_file, data_file = save_results(df, save_dir, copy_data_path)
 
 if __name__ == "__main__":
     main()
