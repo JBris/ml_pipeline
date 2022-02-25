@@ -239,8 +239,8 @@ def add_custom_estimators(estimator: PyCaretEstimatorBase, config: Config, searc
     if len(custom_estimators) == 0:
         return tuned_top
 
-    custom_grid = config.get_custom_grid(search_algorithm, search_library) 
-    for k, v in custom_grid.items():
+    custom_grid_config = config.get_custom_grid(search_algorithm, search_library) 
+    for k, v in custom_grid_config.items():
         custom_grid[k] = v
 
     model_list = []
