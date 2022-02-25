@@ -1,7 +1,25 @@
 evaluation_metric: MSE
+ensemble_methods: ["stacking", "blending", "boosting", "bagging", "blended_boosting", "blended_bagging"]
 fold_groups: null
 meta_model: dt
 n_select: 5
 n_estimators: 10
 n_iter: 10
 turbo: false
+include_estimators: []
+custom_regressors: []
+custom_classifiers: []
+custom_regressor_grid:
+  gamma:
+    alpha: [0, 0.5, 1]
+  gp: 
+    alpha: [1.0e-10]
+    optimizer: [fmin_l_bfgs_b]
+  sgd:
+    # loss: ["squared_error", "huber", "epsilon_insensitive", "squared_epsilon_insensitive"]
+    penalty: ["l2", "l1", "elasticnet"]
+    learning_rate: ["constant", "optimal", "invscaling", "adaptive"]
+  tweedie:
+    power: [0, 1, 1.5, 2, 3]
+    alpha: [0, 0.5, 1]
+custom_classifier_grid: {}

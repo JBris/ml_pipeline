@@ -1,4 +1,4 @@
-file_path: pipelines/kiwi_datasets/data/ga_data_7154.csv
+file_path: pipelines/kiwi_datasets/data/ga_data_7154_extended.csv
 target: gt_weight
 est_task: regression
 evaluation_metric: MSE

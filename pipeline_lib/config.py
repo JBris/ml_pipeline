@@ -15,28 +15,45 @@ import yaml
 
 from typing import Any
 
+# Internal
+from pipeline_lib.data import join_path
+from pipeline_lib.tuning import GridTransformer
+
 ##########################################################################################################
 ### Library  
 ##########################################################################################################
+
+# White list for environment variables
+# Variables are filtered by prefix.
+ENV_VAR_WHITE_LIST = ["ML_PIPELINE_", "MLFLOW_", "RAY_"]
 
 class Config:
     """Pipeline configuration class"""
 
     def __init__(self):
         self.config = {}
-        self.env_var_prefixes = ["MLFLOW_", "RAY_"]
+        self.params_override = {} 
+        self.env_var_prefixes = ENV_VAR_WHITE_LIST
 
-    def get(self, key: str) -> Any:
+    def get(self, k: str, export: bool = True) -> Any:
         """Get a configuration value."""
-        return self.config.get(key)
+        v = self.config.get(k)
+        if export:
+            self.params_override[k] = v
+        return v
 
-    def get_as(self, key: str, v_type: type) -> Any:
+    def get_as(self, k: str, v_type: type, export: bool = True) -> Any:
         """Get and cast a configuration value."""
-        return v_type(self.config.get(key))
+        v = v_type(self.config.get(k))
+        if export:
+            self.params_override[k] = v
+        return v
 
-    def set(self, key: str, value: Any):
+    def set(self, k: str, v: Any, export: bool = True):
         """Set a configuration value."""
-        self.config[key] = value
+        self.config[k] = v
+        if export:
+            self.params_override[k] = v
         return self
 
     def from_env(self):
@@ -56,11 +73,17 @@ class Config:
                 self.extract_key_values(options)
         return self
 
-    def to_yaml(self, outfile: str, default_flow_style: bool = False):
-        """Export the configuration to a YAML file."""
+    def to_yaml(self, config: dict, outfile: str, default_flow_style: bool = False):
+        """Export a dictionary to a YAML file."""
         with open(outfile, 'w') as f:
-            yaml.dump(self.config, f, default_flow_style = default_flow_style)
+            yaml.dump(config, f, default_flow_style = default_flow_style)
         return self
+
+    def export(self, path: str = "", default_flow_style: bool = False) -> str:
+        """Export active configuration to a params.override.yaml file."""
+        config_path = join_path(path, "params.override.yaml")
+        self.to_yaml(self.params_override, config_path, default_flow_style)
+        return config_path
 
     def from_parser(self, parser: argparse.ArgumentParser):
         """Add configuration values from an argument parser."""
@@ -73,18 +96,29 @@ class Config:
         for k, v in options.items():
             self.config[k] = v
         return self
+
+    def get_custom_grid(self, search_algorithm: str, search_library: str):
+        """Transform a custom grid configuration into the appropriate format."""
+        custom_grid_config = self.get("custom_grid")
+        if custom_grid_config is None:
+            return {}
+
+        transformer = GridTransformer(search_algorithm, search_library)
+        custom_grid = transformer.transform(custom_grid_config)
+        return custom_grid
     
 def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
     """
     Get a new configuration object.
 
     Configuration Hierarchy:
-        1. config.global.yaml
-        2. The project's params.yaml
-        3. Arguments from parser 
-        4. The scenario file
-        5. config.local.yaml
-        6. An optional config.yaml file to replicate pipelines
+        1. White-listed environment variables (see ENV_VAR_WHITE_LIST)
+        2. params.global.yaml
+        3. The project's params.yaml
+        4. Arguments from parser 
+        5. The scenario file
+        6. params.local.yaml
+        7. An optional params.override.yaml file to replicate pipelines
 
     Parameters
     --------------
@@ -98,7 +132,7 @@ def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
     """
     config = Config()
     config.from_env()
-    config.from_yaml(f"{base_dir}/config.global.yaml")
+    config.from_yaml(f"{base_dir}/params.global.yaml")
     
     params = "params.yaml"
     if os.path.isfile(params):
@@ -109,15 +143,20 @@ def get_config(base_dir: str, parser: argparse.ArgumentParser = None) -> Config:
 
     scenario = config.get("scenario")
     if scenario is not None:
-        config.from_yaml(f"{base_dir}/scenarios/{scenario}.yaml")
+        scenario_file = f"{base_dir}/scenarios/{scenario}.yaml"
+        if os.path.isfile(scenario_file):
+            config.from_yaml(scenario_file)
+        config.set("scenario", scenario.replace("/", "_"))
 
-    local_config = f"{base_dir}/config.local.yaml"
+    local_config = f"{base_dir}/params.local.yaml"
     if os.path.isfile(local_config):
         config.from_yaml(local_config)
     
-    if config.get("from_config") != ".":
-        config.from_yaml(config.get("from_config"))
-
+    if config.get("from_params") != ".":
+        sizing_dir = config.get("base_dir", False)
+        config.from_yaml(config.get("from_params"))
+        config.set("base_dir", sizing_dir, False)
+        
     return config
 
 def add_argument(parser: argparse.ArgumentParser, name: str, default, arg_help: str, 

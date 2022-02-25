@@ -1,4 +1,4 @@
-file_path: pipelines/kiwi_datasets/data/hw_data_4217.csv
+file_path: pipelines/kiwi_datasets/data/hw_data_4217_extended.csv
 target: gt_weight
 est_task: regression
 evaluation_metric: MSE

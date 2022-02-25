@@ -4,9 +4,9 @@
 
 # External
 import argparse
-import mlflow
 import os, sys
-import tempfile
+from typing import Callable, List
+import pandas as pd
 
 from pycaret.utils import check_metric
 
@@ -14,9 +14,10 @@ base_dir = "../.."
 sys.path.insert(0, os.path.abspath(base_dir))
 
 # Internal 
-from pipeline_lib.config import add_argument, get_config
+from pipeline_lib.config import Config, add_argument, get_config
 from pipeline_lib.data import Data, join_path
-from pipeline_lib.estimator import PyCaretClassifier, PyCaretRegressor, setup
+from pipeline_lib.estimator import EstimatorTask, PyCaretClassifier, PyCaretRegressor, setup, train_ensemble_estimators
+from pipeline_lib.pipelines import end_mlflow, get_experiment_name, init_mlflow, PlotParameters, save_local_results, save_mlflow_results
 
 ##########################################################################################################
 ### Parameters
@@ -28,7 +29,7 @@ parser = argparse.ArgumentParser(
     
 add_argument(parser, "--base_dir", ".", "The base project directory", str)
 add_argument(parser, "--scenario", ".", "The pipeline scenario file", str)
-add_argument(parser, "--from_config", ".", "Override parameters using a config.yaml file", str)
+add_argument(parser, "--from_params", ".", "Override parameters using a params.override.yaml file", str)
 
 ##########################################################################################################
 ### Constants
@@ -36,103 +37,102 @@ add_argument(parser, "--from_config", ".", "Override parameters using a config.y
 
 # Config
 PROJECT_NAME = "ensemble_estimators"
-CONFIG = get_config(base_dir, parser)
-
-EXPERIMENT_NAME = f"{PROJECT_NAME}_{CONFIG.get('scenario')}"
-BASE_DIR = CONFIG.get("base_dir")
-if BASE_DIR is None:
-    raise Exception(f"Directory not defined error: {BASE_DIR}")
+CONFIG: Config = get_config(base_dir, parser)
+EXPERIMENT_NAME = get_experiment_name(PROJECT_NAME, CONFIG)
 
 # Data
 DATA = Data()
-FILE_NAME = join_path(BASE_DIR, CONFIG.get("file_path"))
+FILE_NAME = DATA.get_filename(CONFIG)
 TARGET_VAR = CONFIG.get("target")
 
 # Estimator
 EST_TASK = CONFIG.get("est_task")
-if EST_TASK == "regression":
+if EST_TASK == EstimatorTask.REGRESSION.value:
     ESTIMATOR = PyCaretRegressor()
 else:
     ESTIMATOR = PyCaretClassifier()
-EVALUATION_METRIC = CONFIG.get("evaluation_metric")
+
+# Distributed
+RUN_DISTRIBUTED = CONFIG.get("run_distributed")
 
 # Tuning
-SEARCH_ALGORITHM = CONFIG.get("search_algorithm")
-SEARCH_LIBRARY = CONFIG.get("search_library")
-N_ESTIMATORS = CONFIG.get("n_estimators")
-N_ITER = CONFIG.get("n_iter")
+if RUN_DISTRIBUTED:
+    SEARCH_ALGORITHM = CONFIG.get("distributed_search_algorithm")
+    SEARCH_LIBRARY = CONFIG.get("distributed_search_library")
+else:
+    SEARCH_ALGORITHM = CONFIG.get("search_algorithm")
+    SEARCH_LIBRARY = CONFIG.get("search_library")
 
 # Random
 RANDOM_STATE = CONFIG.get("random_seed") 
+
+# MLFlow
+USE_MLFLOW = CONFIG.get("use_mlflow")
 
 ##########################################################################################################
 ### Pipeline
 ##########################################################################################################
 
+def _get_prediction_metrics(metrics:dict, model, metrics_list: List[str], prefix: str, data: pd.DataFrame = None):
+    predictions = ESTIMATOR.predict_model(model, data = data)
+    for metric in metrics_list:
+        metrics[f"{prefix}_{metric}"] = check_metric(predictions[TARGET_VAR], predictions.Label, metric)        
+    return predictions
+
+def _save_prediction_metrics(log_metric: Callable, metrics: dict, metrics_list: List[str], preds, prefix: str):
+    prefixed_metrics = [ f"{prefix}_{metric}" for metric in metrics_list ]
+    filtered_metrics = { k: metrics[k] for k in prefixed_metrics }
+
+    for k, metric in filtered_metrics.items():
+        log_metric(k, metric)
+    for i, (y, predictions) in enumerate(zip(preds[TARGET_VAR], preds.Label)):
+        log_metric(key = f"{prefix}_actual", value = y, step = i)
+        log_metric(key = f"{prefix}_prediction", value = predictions, step = i)
+
 def main() -> None:
-    mlflow.set_tracking_uri(CONFIG.get("MLFLOW_TRACKING_URI"))
-    with mlflow.start_run() as run, tempfile.TemporaryDirectory() as tmp_dir:
-        client = mlflow.tracking.MlflowClient()
+    if RUN_DISTRIBUTED:
+        import ray
+        ray.init(address = CONFIG.get("RAY_ADDRESS"))  
 
-        # Data split
-        df = DATA.read_csv(FILE_NAME)
-        data, data_unseen = DATA.train_test_split(df, frac = CONFIG.get("training_frac"), random_state = RANDOM_STATE)
+    if USE_MLFLOW:
+        import mlflow
+        tmp_dir = init_mlflow(CONFIG)
 
-        # Data preprocessing
-        est_setup = setup(ESTIMATOR, CONFIG, data, EXPERIMENT_NAME)
+    # Data split
+    df = DATA.read_csv(FILE_NAME)
+    df = DATA.query(CONFIG, df)
+    data, data_unseen = DATA.train_test_split(df, frac = CONFIG.get("training_frac"), random_state = RANDOM_STATE)
 
-        # Estimator fitting
-        top_models = ESTIMATOR.compare_models(n_select = CONFIG.get("n_select"), sort = EVALUATION_METRIC, turbo = CONFIG.get("turbo"))
-        tuned_top = [ 
-            ESTIMATOR.tune_model(model, search_algorithm = SEARCH_ALGORITHM, optimize = EVALUATION_METRIC,
-                search_library = SEARCH_LIBRARY, n_iter = N_ITER, custom_grid = CONFIG.get("custom_grid")) 
-            for model in top_models 
-        ]
+    # Data preprocessing
+    est_setup = setup(ESTIMATOR, CONFIG, data, EXPERIMENT_NAME)
 
-        # Ensemble estimators
-        meta_model = ESTIMATOR.create_model(CONFIG.get("meta_model"))
-        tuned_meta_model = ESTIMATOR.tune_model(meta_model, search_algorithm = SEARCH_ALGORITHM, 
-            optimize = EVALUATION_METRIC, search_library = SEARCH_LIBRARY, n_iter = N_ITER, custom_grid = CONFIG.get("custom_grid"))  
-        stacking_ensemble = ESTIMATOR.stack_models(tuned_top, optimize = EVALUATION_METRIC, meta_model = tuned_meta_model)
-        blending_ensemble = ESTIMATOR.blend_models(tuned_top, optimize = EVALUATION_METRIC, choose_better = True)
-        boosting_ensemble = ESTIMATOR.ensemble_model(tuned_top[0], method = "Boosting", optimize = EVALUATION_METRIC, 
-            choose_better = True, n_estimators = N_ESTIMATORS)
-        bagging_ensemble = ESTIMATOR.ensemble_model(tuned_top[0], method = "Bagging", optimize = EVALUATION_METRIC, 
-            choose_better = True, n_estimators = N_ESTIMATORS)
-        boosted_top = [ 
-            ESTIMATOR.ensemble_model(model, method = "Boosting", optimize = EVALUATION_METRIC, 
-                choose_better = True, n_estimators = N_ESTIMATORS)
-            for model in top_models 
-        ]
-        boosted_blending_ensemble = ESTIMATOR.blend_models(boosted_top, optimize = EVALUATION_METRIC, choose_better = True)
-        best_model = ESTIMATOR.automl(optimize = EVALUATION_METRIC)        
+    # Estimator fitting
+    best_model, final_ensemble = train_ensemble_estimators(ESTIMATOR, CONFIG, SEARCH_ALGORITHM, SEARCH_LIBRARY)
 
-        # Evaluate
-        unseen_predictions = ESTIMATOR.predict_model(best_model, data = data_unseen)
-        MAE = check_metric(unseen_predictions[TARGET_VAR], unseen_predictions.Label, 'MAE')
-        MSE = check_metric(unseen_predictions[TARGET_VAR], unseen_predictions.Label, 'MSE')
-        mlflow.log_metric("testing_mae", MAE)
-        mlflow.log_metric("testing_mse", MSE)
+    # Evaluate model
+    metrics = {}
+    if EST_TASK == EstimatorTask.REGRESSION.value:
+        training_preds = _get_prediction_metrics(metrics, best_model, ["MAE", "MSE"], "training")
+        testing_preds = _get_prediction_metrics(metrics, best_model, ["MAE", "MSE"], "testing", data_unseen)
+        final_preds = _get_prediction_metrics(metrics, final_ensemble, ["MAE", "MSE"], "finalised", data_unseen)
+        if USE_MLFLOW:
+            _save_prediction_metrics(mlflow.log_metric, metrics, ["MAE", "MSE"], training_preds, "training")
+            _save_prediction_metrics(mlflow.log_metric, metrics, ["MAE", "MSE"], testing_preds, "testing")
+            _save_prediction_metrics(mlflow.log_metric, metrics, ["MAE", "MSE"], final_preds, "finalised")
 
-        for i, (y, predictions) in enumerate(zip(unseen_predictions[TARGET_VAR], unseen_predictions.Label)):
-            mlflow.log_metric(key = "testing_actual", value = y, step = i)
-            mlflow.log_metric(key = "testing_prediction", value = predictions, step = i)
-                
-        config_yaml = join_path(tmp_dir, "config.yaml")
-        CONFIG.to_yaml(config_yaml)
-        mlflow.log_artifact(config_yaml)
+    # Save results
+    plot_params = PlotParameters(ESTIMATOR.plot_model, plots = ["residuals", "error"], model = best_model)
+    if USE_MLFLOW:
+        save_mlflow_results(CONFIG, final_ensemble, EXPERIMENT_NAME, tmp_dir, plot_params = plot_params)
+        end_mlflow(PROJECT_NAME, EXPERIMENT_NAME, tmp_dir, CONFIG.get("author"))
+    else:
+        save_path = save_local_results(CONFIG, final_ensemble, EXPERIMENT_NAME, plot_params = plot_params)
+        if len(metrics.keys()) > 0:
+            pd.DataFrame(metrics, index = [0]).to_csv(join_path(save_path, f"{EXPERIMENT_NAME}_metrics.csv")) 
+
+    if RUN_DISTRIBUTED:
+        ray.shutdown()
         
-        final_ensemble = ESTIMATOR.finalize_model(best_model)
-        mlflow.sklearn.log_model(final_ensemble, EXPERIMENT_NAME, registered_model_name = EXPERIMENT_NAME)
-
-        for plot in ["residuals", "error"]:
-            ensemble_model_plot = ESTIMATOR.plot_model(final_ensemble, plot = plot, save = tmp_dir)
-            mlflow.log_artifact(join_path(tmp_dir, ensemble_model_plot))
-
-
-        mlflow.set_tag("project", PROJECT_NAME)
-        mlflow.set_tag("experiment", EXPERIMENT_NAME)
-
 if __name__ == "__main__":
     main()
      

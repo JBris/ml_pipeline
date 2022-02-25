@@ -1,0 +1,45 @@
+schema: '2.0'
+stages:
+  run:
+    cmd: python src/run.py
+    deps:
+    - path: data/ga_data_4217.csv
+      md5: 94f5df557b6defeaf96faef1f008a599
+      size: 569987
+    - path: data/ga_data_7154.csv
+      md5: 14896792f3bcad955276d07d9db60423
+      size: 495530
+    - path: data/ga_data_combined.csv
+      md5: a8145d9a4fca177f5d009d3a3a64578e
+      size: 1065385
+    - path: data/hw_data_4217.csv
+      md5: 1f9fd9c64652a2aeefa9cbf3ea10916f
+      size: 584805
+    - path: data/hw_data_7154.csv
+      md5: b2d3398aafa6406a334aacbb4949d9fd
+      size: 641770
+    - path: data/hw_data_combined.csv
+      md5: dc2117ec51579fc78faa29913512c70a
+      size: 1226443
+    - path: src/run.py
+      md5: 04efd2e02d12ebc43ce8c06ed0924b31
+      size: 1778
+    outs:
+    - path: data/ga_data_4217_extended.csv
+      md5: 49f21f1f6bd59800575421f3096c4dfc
+      size: 791545
+    - path: data/ga_data_7154_extended.csv
+      md5: 63d771fff43f4ac843f2e9e6cb257b8f
+      size: 688169
+    - path: data/ga_data_combined_extended.csv
+      md5: 9a3ceb72e34a15486b6b87b4a47a32e5
+      size: 1479524
+    - path: data/hw_data_4217_extended.csv
+      md5: 45319b68cee88bc7aed2a48642cbd58e
+      size: 812423
+    - path: data/hw_data_7154_extended.csv
+      md5: 8d32de37be75687aef2d44db59535745
+      size: 891463
+    - path: data/hw_data_combined_extended.csv
+      md5: b3c9a6c35d3f04454ab1003570c93a01
+      size: 1703696
