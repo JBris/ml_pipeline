@@ -55,7 +55,6 @@ USE_MLFLOW = CONFIG.get("use_mlflow")
 
 def save_results(df: pd.DataFrame, path_prefix: str, copy_data_path: str):
     """Save preprocessing results."""
-    config_file = CONFIG.export(path_prefix)
     preprocessed_fname = CONFIG.get("preprocessed_file_name")
     if preprocessed_fname is None:
         preprocessed_fname = f"{EXPERIMENT_NAME}_data.csv"
@@ -65,6 +64,7 @@ def save_results(df: pd.DataFrame, path_prefix: str, copy_data_path: str):
     if copy_data_path is not None:
         shutil.copy2(data_file, copy_data_path)
 
+    config_file = CONFIG.export(path_prefix)
     return config_file, data_file
 
 def main() -> None:
