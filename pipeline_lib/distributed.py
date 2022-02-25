@@ -10,13 +10,13 @@ A library for facilitating distributed and parallel computing within the machine
 
 # External
 import os
-import dask.distributed as dd
 
 ##########################################################################################################
 ### Library  
 ##########################################################################################################
 
 def init_dask():
+    import dask.distributed as dd
     import dask_mpi as dm
     """Initialise Dask cluster files, and connect to cluster using a client."""
     # Initialise Dask cluster and store worker files in current work directory
@@ -24,5 +24,5 @@ def init_dask():
     client = dd.Client()
     return client
 
-def close_dask(client: dd.Client):
+def close_dask(client):
     client.close()
